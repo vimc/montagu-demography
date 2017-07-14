@@ -12,11 +12,11 @@ The script requires the following packages:
 
 The script requires that the following tables exist according to the latest schema.
 
-* demographic_statistic_type
-* gender
-* projection_variant
-* source
-* country - and the script further requires this table to be populated already.
+* `demographic_statistic_type`
+* `gender`
+* `projection_variant`
+* `source`
+* `country` - and the script further requires this table to be populated already.
 
 Two environment variables set the behaviour:-
 
@@ -33,15 +33,15 @@ Two environment variables set the behaviour:-
 * Creates a `data/` directory, and downloads UNWPP data from `mrcdata.dide.ic.ac.uk`. (See data below)
 * (note that files are only downloaded if the destination doesn't exist)
 * Parse `iso3166.xml` (also downloaded from mrcdata), creating lookup from 3-digit numeric code (UNWPP), to 3-digit alpha-code.
-* Populate demographic_statistic_type, gender, projection_variant and source with the constants.
-* Populate the demographic_statistic table with the demographic data.
+* Populate `demographic_statistic_type`, `gender`, `projection_variant` and `source` with the constants.
+* Populate `demographic_statistic` table with the demographic data.
 
 ### Development/Debugging
 
 Two extra functions may be useful for debugging.
 
-* `empty_tables(db)` empties the demographic_statistic_type, gender, projection_variant, source, and demographic_statistic tables.
-* `init_country_table(db, iso3166)` initialises an empty country table.
+* `empty_tables(db)` empties the `demographic_statistic_type`, `gender`, `projection_variant`, `source`, and `demographic_statistic` tables.
+* `init_country_table(db, iso3166)` populates an empty `country` table.
 
 ## Data Supported
 
@@ -55,6 +55,6 @@ Two extra functions may be useful for debugging.
 
 * New spreadsheets should be put somewhere in `C:\xampp\htdocs\mrcdata\resources` on `fi--didex1.dide.ic.ac.uk`
 * Update the download_data function - consider whether new directories should be made.
-* May need to add rows in demographic_statistic_type, sources, and/or projection_variant.
-* Write function to import the data. (see process_interpolated_population, which called by process_interpolated_population_{2012,2015,2017}.
+* May need to add rows in `demographic_statistic_type`, `source`, and/or `projection_variant`.
+* Write the function to import the data. (see `process_interpolated_population`, which called by `process_interpolated_population_{2012,2015,2017}`.
 
