@@ -1,1 +1,4 @@
 data
+*.bak
+.Rproj.user
+montagu_demography.Rproj

@@ -1,3 +1,9 @@
+
+# init_country_table populates an empty country table with 
+# the 3-digit alpha code for both name and country, just so
+# the demographic statistic "country" field has something to
+# link to.
+
 init_country_table <- function(db,iso3166) {
   DBI::dbExecute(db,"DELETE FROM country")
   country <- data.frame(id = iso3166$code,
@@ -6,23 +12,25 @@ init_country_table <- function(db,iso3166) {
   DBI::dbWriteTable(db, "country", country, append = TRUE)
 }
 
+# For dev only:
+# Code to empty the tables. (Not drop them)
+
 empty_tables <- function(db) {
   rs<-DBI::dbSendStatement(db,"DELETE FROM demographic_statistic");
-  dbFetch(rs)
   rs<-dbClearResult(rs)
   rs<-DBI::dbSendStatement(db,"DELETE FROM gender");  
-  dbFetch(rs)
   rs<-dbClearResult(rs)
   rs<-DBI::dbSendStatement(db,"DELETE FROM projection_variant");
-  dbFetch(rs)
   rs<-dbClearResult(rs)
   rs<-DBI::dbSendStatement(db,"DELETE FROM source");
-  dbFetch(rs)
   rs<-dbClearResult(rs)
   rs<-DBI::dbSendStatement(db,"DELETE FROM demographic_statistic_type");
-  dbFetch(rs)
   rs<-dbClearResult(rs)
 }
+
+# init_tables
+# Adds identifiers for the gender, projection, demographic_statistic_type
+# and source tables.
 
 init_tables <- function(db) {
   gender_table <- data.frame(c("BOTH","MALE","FEMALE"),
@@ -31,10 +39,15 @@ init_tables <- function(db) {
   DBI::dbWriteTable(db,"gender",gender_table, append=TRUE)
 
 
-  projection_table <- data.frame(c("ESTIMATES","MEDIUM_VARIANT","HIGH_VARIANT","LOW_VARIANT","CONSTANT_FERTILITY",
-                                   "INSTANT_REPLACEMENT","MOMENTUM","ZERO_MIGRATION","CONSTANT_MORTALITY","NO_CHANGE"),
-                                 c("Estimates","Medium Variant","High Variant","Low Variant","Constant Fertility",
-                                   "Instant Replacement","Momentum","Zero Migration","Constant Mortality","No Change"))
+
+  projection_table <- data.frame(c("UNWPP_ESTIMATES","UNWPP_MEDIUM_VARIANT","UNWPP_HIGH_VARIANT",
+                                   "UNWPP_LOW_VARIANT","UNWPP_CONSTANT_FERTILITY","UNWPP_INSTANT_REPLACEMENT",
+                                   "UNWPP_MOMENTUM","UNWPP_ZERO_MIGRATION","UNWPP_CONSTANT_MORTALITY",
+                                   "UNWPP_NO_CHANGE"),
+                                 c("UNWPP Estimates","UNWPP Medium Variant","UNWPP High Variant",
+                                   "UNWPP Low Variant","UNWPP Constant Fertility","UNWPP Instant Replacement",
+                                   "UNWPP Momentum","UNWPP Zero Migration","UNWPP Constant Mortality",
+                                   "UNWPP No Change"))
   colnames(projection_table) <- c("id","name")
 
   DBI::dbWriteTable(db,"projection_variant",projection_table, append=TRUE)
@@ -106,7 +119,7 @@ process_interpolated_population <- function(db, xlfile, gender, sheets,
     t <- -(as.numeric(Sys.time()))
     age_cols_pre_1990 <- as.character(c(0:79,"80+"))
     
-    # Hack because column "100+" has been renamed to "100" in UNWPP 2017.
+    # Column "100+" has been renamed to "100" in UNWPP 2017.
     if ("100+" %in% colnames(xl)) {
       age_cols_from_1990 <- as.character(c(0:99,"100+"))
     } else {
@@ -147,51 +160,65 @@ process_interpolated_population <- function(db, xlfile, gender, sheets,
   
 }
 
+process_interpolated_population_2012 <- function(db, iso3166) {
+
+  variant_names <- c("UNWPP_ESTIMATES","UNWPP_MEDIUM_VARIANT")
+  sheet_names <- c("ESTIMATES","MEDIUM FERTILITY")
+  
+  process_interpolated_population(db,
+                      "data/wpp2012/WPP2012_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLS",
+                      "BOTH",sheet_names, variant_names, "UNWPP_2012",iso3166)
+  
+  process_interpolated_population(db,
+                      "data/wpp2012/WPP2012_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLS",
+                      "MALE",sheet_names, variant_names, "UNWPP_2012",iso3166)
+  
+  process_interpolated_population(db,
+                      "data/wpp2012/WPP2012_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLS",
+                      "FEMALE",sheet_names, variant_names, "UNWPP_2012",iso3166)
+}
+
+process_interpolated_population_2015 <- function(db, iso3166) {
+  
+  variant_names <- c("UNWPP_ESTIMATES","UNWPP_MEDIUM_VARIANT")
+  sheet_names <- c("ESTIMATES","MEDIUM VARIANT")
+  
+  process_interpolated_population(db,
+                      "data/wpp2015/WPP2015_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLS",
+                      "BOTH", sheet_names, variant_names, "UNWPP_2015", iso3166)
+  
+  process_interpolated_population(db,
+                      "data/wpp2015/WPP2015_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLS",
+                      "MALE", sheet_names, variant_names, "UNWPP_2015",iso3166)
+  
+  process_interpolated_population(db,
+                      "data/wpp2015/WPP2015_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLS",
+                      "FEMALE", sheet_names, variant_names, "UNWPP_2015",iso3166)
+}
+  
+process_interpolated_population_2017 <- function(db, iso3166) {
+  
+  variant_names <- c("UNWPP_ESTIMATES","UNWPP_MEDIUM_VARIANT")
+  sheet_names <- c("ESTIMATES","MEDIUM VARIANT")
+  
+  process_interpolated_population(db,
+                      "data/wpp2017/WPP2017_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLSX",
+                      "BOTH", sheet_names, variant_names, "UNWPP_2017", iso3166)
+  
+  process_interpolated_population(db,
+                      "data/wpp2017/WPP2017_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLSX",
+                      "MALE", sheet_names,variant_names, "UNWPP_2017", iso3166)
+  
+  process_interpolated_population(db,
+                      "data/wpp2017/WPP2017_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLSX",
+                      "FEMALE", sheet_names, variant_names, "UNWPP_2017", iso3166)
+}
+
 process_all_interpolated_population <- function(db, iso3166) {
-  variant_names <- c("ESTIMATES","MEDIUM_VARIANT")
-  sheet_names_2015 <- c("ESTIMATES","MEDIUM VARIANT")
-  sheet_names_2012 <- c("ESTIMATES","MEDIUM FERTILITY")
-
-  #2015
-  process_interpolated_population(db,
-                                  "data/wpp2015/WPP2015_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLS",
-                                  "BOTH", sheet_names_2015, variant_names, "UNWPP_2015", iso3166)
-
-  process_interpolated_population(db,
-                                  "data/wpp2015/WPP2015_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLS",
-                                  "MALE", sheet_names_2015, variant_names, "UNWPP_2015",iso3166)
-
-  process_interpolated_population(db,
-                                  "data/wpp2015/WPP2015_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLS",
-                                  "FEMALE", sheet_names_2015, variant_names, "UNWPP_2015",iso3166)
-
-
-  #2017
-  process_interpolated_population(db,
-                                  "data/wpp2017/WPP2017_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLSX",
-                                  "BOTH", sheet_names_2015, variant_names, "UNWPP_2017", iso3166)
-
-  process_interpolated_population(db,
-                                  "data/wpp2017/WPP2017_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLSX",
-                                  "MALE", sheet_names_2015,variant_names, "UNWPP_2017", iso3166)
-
-  process_interpolated_population(db,
-                                  "data/wpp2017/WPP2017_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLSX",
-                                  "FEMALE", sheet_names_2015, variant_names, "UNWPP_2017", iso3166)
-
-
-  #2012
-  process_interpolated_population(db,
-                                  "data/wpp2012/WPP2012_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLS",
-                                  "BOTH",sheet_names_2012, variant_names, "UNWPP_2012",iso3166)
-
-  process_interpolated_population(db,
-                                  "data/wpp2012/WPP2012_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLS",
-                                  "MALE",sheet_names_2012, variant_names, "UNWPP_2012",iso3166)
-
-  process_interpolated_population(db,
-                                  "data/wpp2012/WPP2012_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLS",
-                                  "FEMALE",sheet_names_2012, variant_names, "UNWPP_2012",iso3166)
+  
+  process_interpolated_population_2012(db,iso3166);
+  process_interpolated_population_2015(db,iso3166);
+  process_interpolated_population_2017(db,iso3166);
 
 }
 
