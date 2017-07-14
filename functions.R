@@ -152,7 +152,7 @@ process_interpolated_population <- function(db, xlfile, gender, sheets,
   
   for (i in seq_along(sheets)) {
     x <- read_sheet(sheets[[i]], variant_names[[i]])
-    dbWriteTable(db, "demographic_statistic", x, append = TRUE)
+    DBI::dbWriteTable(db, "demographic_statistic", x, append = TRUE)
   }
   
   t <- t+(as.numeric(Sys.time()))
