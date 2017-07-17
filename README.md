@@ -29,7 +29,7 @@ Two environment variables set the behaviour:-
 
  Running import.R does the following steps:
 
-* Loads the list of 97 relevant countries from `countries_keep.txt`
+* Loads the list of 97 relevant countries from `meta/countries_keep.txt`
 * Creates a `data/` directory, and downloads UNWPP data from `mrcdata.dide.ic.ac.uk`. (See data below)
 * (note that files are only downloaded if the destination doesn't exist)
 * Parse `iso3166.xml` (also downloaded from mrcdata), creating lookup from 3-digit numeric code (UNWPP), to 3-digit alpha-code.

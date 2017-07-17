@@ -67,7 +67,7 @@ read_iso_countries <- function(filter = TRUE) {
                     code = xml2::xml_attr(xml_countries, "c3"),
                     stringsAsFactors = FALSE)
   if (filter) {
-    ret <- ret[ret$code %in% readLines("countries_keep.txt"), ]
+    ret <- ret[ret$code %in% readLines("meta/countries_keep.txt"), ]
   }
   ret
 }
