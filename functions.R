@@ -1,10 +1,8 @@
-
-# init_country_table populates an empty country table with 
+# init_country_table populates an empty country table with
 # the 3-digit alpha code for both name and country, just so
 # the demographic statistic "country" field has something to
 # link to.
-
-init_country_table <- function(db,iso3166) {
+init_country_table <- function(db, iso3166) {
   DBI::dbExecute(db,"DELETE FROM country")
   country <- data.frame(id = iso3166$code,
                         name = iso3166$code,
@@ -14,82 +12,67 @@ init_country_table <- function(db,iso3166) {
 
 # For dev only:
 # Code to empty the tables. (Not drop them)
-
 empty_tables <- function(db) {
-  rs<-DBI::dbSendStatement(db,"DELETE FROM demographic_statistic");
-  rs<-dbClearResult(rs)
-  rs<-DBI::dbSendStatement(db,"DELETE FROM gender");  
-  rs<-dbClearResult(rs)
-  rs<-DBI::dbSendStatement(db,"DELETE FROM projection_variant");
-  rs<-dbClearResult(rs)
-  rs<-DBI::dbSendStatement(db,"DELETE FROM source");
-  rs<-dbClearResult(rs)
-  rs<-DBI::dbSendStatement(db,"DELETE FROM demographic_statistic_type");
-  rs<-dbClearResult(rs)
+  DBI::dbBegin(db)
+  on.exit(DBI::dbRollback(db))
+  DBI::dbExecute(db, "ALTER TABLE demographic_statistic DISABLE TRIGGER ALL")
+
+  DBI::dbExecute(db, "DELETE FROM demographic_statistic")
+  DBI::dbExecute(db, "DELETE FROM gender")
+  DBI::dbExecute(db, "DELETE FROM projection_variant")
+  DBI::dbExecute(db, "DELETE FROM source")
+  DBI::dbExecute(db, "DELETE FROM demographic_statistic_type")
+
+  DBI::dbExecute(db, "ALTER TABLE demographic_statistic ENABLE TRIGGER ALL")
+  DBI::dbCommit(db)
+  on.exit()
 }
 
 # init_tables
 # Adds identifiers for the gender, projection, demographic_statistic_type
 # and source tables.
-
 init_tables <- function(db) {
-  gender_table <- data.frame(c("BOTH","MALE","FEMALE"),
-                             c("Both","Male","Female"))
-  colnames(gender_table) <- c("id","name")
-  DBI::dbWriteTable(db,"gender",gender_table, append=TRUE)
-
-
-
-  projection_table <- data.frame(c("UNWPP_ESTIMATES","UNWPP_MEDIUM_VARIANT","UNWPP_HIGH_VARIANT",
-                                   "UNWPP_LOW_VARIANT","UNWPP_CONSTANT_FERTILITY","UNWPP_INSTANT_REPLACEMENT",
-                                   "UNWPP_MOMENTUM","UNWPP_ZERO_MIGRATION","UNWPP_CONSTANT_MORTALITY",
-                                   "UNWPP_NO_CHANGE"),
-                                 c("UNWPP Estimates","UNWPP Medium Variant","UNWPP High Variant",
-                                   "UNWPP Low Variant","UNWPP Constant Fertility","UNWPP Instant Replacement",
-                                   "UNWPP Momentum","UNWPP Zero Migration","UNWPP Constant Mortality",
-                                   "UNWPP No Change"))
-  colnames(projection_table) <- c("id","name")
-
-  DBI::dbWriteTable(db,"projection_variant",projection_table, append=TRUE)
-
-
-  demographic_statistic_type_table <- data.frame(c("INT_POP"),c("Age (years)"),c("Interpolated Population"))
-  colnames(demographic_statistic_type_table) <- c("id","age_interpretation","name")
-
-  DBI::dbWriteTable(db,"demographic_statistic_type",demographic_statistic_type_table, append=TRUE)
-
-
-  source_table <- data.frame(c("UNWPP_2012","UNWPP_2015","UNWPP_2017"),
-                             c("UNWPP 2012","UNWPP 2015","UNWPP 2017"))
-  colnames(source_table) <- c("id","name")
-
-  DBI::dbWriteTable(db,"source",source_table, append=TRUE)
+  init1 <- function(name) {
+    data <- read_csv(sprintf("meta/%s.csv", name))
+    DBI::dbWriteTable(db, name, data, append = TRUE)
+  }
+  tables <- c("gender", "projection_variant", "demographic_statistic_type",
+              "source")
+  for (t in tables) {
+    init1(t)
+  }
 }
 
-
 download_single <- function(url, dest) {
-  if (!file.exists(dest)) download.file(url,dest,method='libcurl', mode="wb")
+  if (!file.exists(dest)) {
+    download.file(url,dest,method='libcurl', mode="wb")
+  }
 }
 
 download_data <- function() {
-  if (!file.exists('data')) dir.create('data')
-  if (!file.exists('data/wpp2012')) dir.create('data/wpp2012')
-  if (!file.exists('data/wpp2015')) dir.create('data/wpp2015')
-  if (!file.exists('data/wpp2017')) dir.create('data/wpp2017')
-  download_single("https://mrcdata.dide.ic.ac.uk/resources/unwpp/wpp2012/WPP2012_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.xls","data/wpp2012/WPP2012_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLS")
-  download_single("https://mrcdata.dide.ic.ac.uk/resources/unwpp/wpp2012/WPP2012_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.xls","data/wpp2012/WPP2012_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLS")
-  download_single("https://mrcdata.dide.ic.ac.uk/resources/unwpp/wpp2012/WPP2012_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.xls","data/wpp2012/WPP2012_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLS")
-  download_single("https://mrcdata.dide.ic.ac.uk/resources/unwpp/wpp2015/WPP2015_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLS","data/wpp2015/WPP2015_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLS")
-  download_single("https://mrcdata.dide.ic.ac.uk/resources/unwpp/wpp2015/WPP2015_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLS","data/wpp2015/WPP2015_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLS")
-  download_single("https://mrcdata.dide.ic.ac.uk/resources/unwpp/wpp2015/WPP2015_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLS","data/wpp2015/WPP2015_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLS")
-  download_single("https://mrcdata.dide.ic.ac.uk/resources/unwpp/wpp2017/WPP2017_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.xlsx","data/wpp2017/WPP2017_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLSX")
-  download_single("https://mrcdata.dide.ic.ac.uk/resources/unwpp/wpp2017/WPP2017_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.xlsx","data/wpp2017/WPP2017_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLSX")
-  download_single("https://mrcdata.dide.ic.ac.uk/resources/unwpp/wpp2017/WPP2017_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.xlsx","data/wpp2017/WPP2017_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLSX")
-  download_single("https://mrcdata.dide.ic.ac.uk/resources/iso3166.xml","data/iso3166.xml")
+  files <- read.csv("meta/files.csv", stringsAsFactors = FALSE)
+  for (p in unique(dirname(files$filename))) {
+    dir.create(p, FALSE, TRUE)
+  }
+  for (i in seq_len(nrow(files))) {
+    download_single(files$url[[i]], files$filename[[i]])
+  }
 }
 
-process_interpolated_population <- function(db, xlfile, gender, sheets,
-                                            variant_names,source, iso3166) {
+read_iso_countries <- function(filter = TRUE) {
+  iso3166 <- xml2::read_xml("data/iso3166.xml")
+  xml_countries <- xml2::xml_find_all(iso3166, "//c")
+  ret <- data.frame(id = as.numeric(xml2::xml_attr(xml_countries, "n3")),
+                    code = xml2::xml_attr(xml_countries, "c3"),
+                    stringsAsFactors = FALSE)
+  if (filter) {
+    ret <- ret[ret$code %in% readLines("countries_keep.txt"), ]
+  }
+  ret
+}
+
+process_interpolated_population <- function(db, xlfile, gender, sheet_names,
+                                            variant_names, source, iso3166) {
   reshape <- function(x, cols) {
     age_to <- age_from <- seq_along(cols) - 1L
     age_to[length(age_to)] <- 120L
@@ -107,27 +90,22 @@ process_interpolated_population <- function(db, xlfile, gender, sheets,
                country = x$iso3,
                value = value)
   }
-  read_sheet <- function(sheet, variant) {
-    
+  read_sheet <- function(sheet) {
     message(sprintf("Reading %s:%s", xlfile, sheet))
-    t <- -(as.numeric(Sys.time()))
     xl <- read_excel(xlfile, sheet = sheet, skip = 16, col_names = TRUE,
                      na = c("", "…"))
-    t <- t+(as.numeric(Sys.time()))
-    message(sprintf("E-Time: %f",t*1000))
-    
-    t <- -(as.numeric(Sys.time()))
+    xl
+  }
+  process_sheet <- function(xl, variant) {
     age_cols_pre_1990 <- as.character(c(0:79,"80+"))
-    
+
     # Column "100+" has been renamed to "100" in UNWPP 2017.
     if ("100+" %in% colnames(xl)) {
       age_cols_from_1990 <- as.character(c(0:99,"100+"))
     } else {
       age_cols_from_1990 <- as.character(c(0:100))
     }
-    
-    
-    message("...processing")
+
     xl$iso3 <- iso3166$code[match(xl$"Country code", iso3166$id)]
     xl <- as.data.frame(xl[!is.na(xl$iso3), ])
     xl$year <- xl[[6]]
@@ -138,88 +116,50 @@ process_interpolated_population <- function(db, xlfile, gender, sheets,
     res$projection_variant <- variant
     res$date_start <- sprintf("%d-07-01", res$year)
     res$date_end <- sprintf("%d-06-30", res$year + 1)
-    res$year<-NULL
-    res$gender<-gender
-    res$source<-source
-    res$demographic_statistic_type<-"INT_POP"
-    t <- t+(as.numeric(Sys.time()))
-    message(sprintf("P-Time: %f",t*1000))
+    res$year <- NULL
+    res$gender <- gender
+    res$source <- source
+    res$demographic_statistic_type <- "INT_POP"
     res
-    
+  }
+  upload_data <- function(d) {
+    ## Manually satisfy FK constraints:
+    fks <- c("gender", "source", "country", "projection_variant",
+             "demographic_statistic_type")
+    for (fk in fks) {
+      if (!all(d[[fk]] %in% DBI::dbReadTable(db, fk)$id)) {
+        stop("Foreign key violation for ", fk)
+      }
+    }
+
+    DBI::dbBegin(db)
+    on.exit(DBI::dbRollback(db))
+    DBI::dbExecute(db, "ALTER TABLE demographic_statistic DISABLE TRIGGER ALL")
+    DBI::dbWriteTable(db, "demographic_statistic", d, append = TRUE)
+    DBI::dbExecute(db, "ALTER TABLE demographic_statistic ENABLE TRIGGER ALL")
+    DBI::dbCommit(db)
+    on.exit()
   }
 
-  t <- -(as.numeric(Sys.time()))
-  
-  for (i in seq_along(sheets)) {
-    x <- read_sheet(sheets[[i]], variant_names[[i]])
-    DBI::dbWriteTable(db, "demographic_statistic", x, append = TRUE)
+  for (i in seq_along(sheet_names)) {
+    xl <- report_time(read_sheet(sheet_names[[i]]), "read")
+    d <- report_time(process_sheet(xl, variant_names[[i]]), "process")
+    report_time(upload_data(d), "upload")
   }
-  
-  t <- t+(as.numeric(Sys.time()))
-  message(sprintf("DBTime: %f",t*1000))
-  
 }
 
-process_interpolated_population_2012 <- function(db, iso3166) {
 
-  variant_names <- c("UNWPP_ESTIMATES","UNWPP_MEDIUM_VARIANT")
-  sheet_names <- c("ESTIMATES","MEDIUM FERTILITY")
-  
-  process_interpolated_population(db,
-                      "data/wpp2012/WPP2012_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLS",
-                      "BOTH",sheet_names, variant_names, "UNWPP_2012",iso3166)
-  
-  process_interpolated_population(db,
-                      "data/wpp2012/WPP2012_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLS",
-                      "MALE",sheet_names, variant_names, "UNWPP_2012",iso3166)
-  
-  process_interpolated_population(db,
-                      "data/wpp2012/WPP2012_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLS",
-                      "FEMALE",sheet_names, variant_names, "UNWPP_2012",iso3166)
-}
+process_all_interpolated_population <- function(db) {
+  iso3166 <- read_iso_countries()
+  info <- read_csv("meta/process.csv")
 
-process_interpolated_population_2015 <- function(db, iso3166) {
-  
-  variant_names <- c("UNWPP_ESTIMATES","UNWPP_MEDIUM_VARIANT")
-  sheet_names <- c("ESTIMATES","MEDIUM VARIANT")
-  
-  process_interpolated_population(db,
-                      "data/wpp2015/WPP2015_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLS",
-                      "BOTH", sheet_names, variant_names, "UNWPP_2015", iso3166)
-  
-  process_interpolated_population(db,
-                      "data/wpp2015/WPP2015_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLS",
-                      "MALE", sheet_names, variant_names, "UNWPP_2015",iso3166)
-  
-  process_interpolated_population(db,
-                      "data/wpp2015/WPP2015_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLS",
-                      "FEMALE", sheet_names, variant_names, "UNWPP_2015",iso3166)
-}
-  
-process_interpolated_population_2017 <- function(db, iso3166) {
-  
-  variant_names <- c("UNWPP_ESTIMATES","UNWPP_MEDIUM_VARIANT")
-  sheet_names <- c("ESTIMATES","MEDIUM VARIANT")
-  
-  process_interpolated_population(db,
-                      "data/wpp2017/WPP2017_INT_F03_1_POPULATION_BY_AGE_ANNUAL_BOTH_SEXES.XLSX",
-                      "BOTH", sheet_names, variant_names, "UNWPP_2017", iso3166)
-  
-  process_interpolated_population(db,
-                      "data/wpp2017/WPP2017_INT_F03_2_POPULATION_BY_AGE_ANNUAL_MALE.XLSX",
-                      "MALE", sheet_names,variant_names, "UNWPP_2017", iso3166)
-  
-  process_interpolated_population(db,
-                      "data/wpp2017/WPP2017_INT_F03_3_POPULATION_BY_AGE_ANNUAL_FEMALE.XLSX",
-                      "FEMALE", sheet_names, variant_names, "UNWPP_2017", iso3166)
-}
-
-process_all_interpolated_population <- function(db, iso3166) {
-  
-  process_interpolated_population_2012(db,iso3166);
-  process_interpolated_population_2015(db,iso3166);
-  process_interpolated_population_2017(db,iso3166);
-
+  for (i in seq_len(nrow(info))) {
+    x <- info[i, ]
+    sheet_names <- strsplit(x$sheet_names, ";\\s*")[[1]]
+    variant_names <- strsplit(x$variant_names, ";\\s*")[[1]]
+    process_interpolated_population(db, x$filename, x$gender, sheet_names,
+                                    variant_names, x$source, iso3166)
+  }
 }
 
 read_excel <- function(...) {
@@ -228,4 +168,15 @@ read_excel <- function(...) {
     on.exit(options(oo))
   }
   readxl::read_excel(...)
+}
+
+read_csv <- function(...) {
+  read.csv(..., stringsAsFactors = FALSE)
+}
+
+report_time <- function(expr, label) {
+  t <- system.time(res <- force(expr))
+  message(sprintf("...%s time: %2.2f s (%2.2f s wall)",
+                  label, t[["elapsed"]], summary(t)[["user"]]))
+  res
 }
