@@ -26,6 +26,7 @@ empty_tables <- function(db) {
   DBI::dbExecute(db, "ALTER TABLE demographic_statistic ENABLE TRIGGER ALL")
   DBI::dbCommit(db)
   on.exit()
+  DBI::dbExecute(db, "VACUUM")
 }
 
 # init_tables
@@ -119,7 +120,7 @@ process_interpolated_population <- function(db, xlfile, gender, sheet_names,
     res$year <- NULL
     res$gender <- gender
     res$source <- source
-    res$demographic_statistic_type <- "INT_POP"
+    res$demographic_statistic_type <- "int_pop"
     res
   }
   upload_data <- function(d) {
