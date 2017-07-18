@@ -1,17 +1,13 @@
-import_demography <- function(db) {
+import_demography <- function(con) {
   download_data()
-  init_tables(db)
-  process_all_interpolated_population(db)
-  DBI::dbExecute(db, "VACUUM")
+  init_tables(con)
+  process_all_interpolated_population(con)
+  DBI::dbExecute(con, "VACUUM")
 }
 
 # For dev only:
 # Code to empty the tables. (Not drop them)
-empty_tables <- function(db) {
-  ## DBI::dbBegin(db)
-  ## on.exit(DBI::dbRollback(db))
-  ## DBI::dbExecute(db, "ALTER TABLE demographic_statistic DISABLE TRIGGER ALL")
-
+empty_tables <- function(con) {
   tables <- c("demographic_statistic",
               "touchstone_demographic_source",
               "gender", "projection_variant", "source",
@@ -19,39 +15,34 @@ empty_tables <- function(db) {
   tables_str <- paste(tables, collapse = ", ")
   sql <- paste("TRUNCATE", tables_str)
   message(sprintf("Clearing %s", tables_str))
-  DBI::dbExecute(db, sql)
-
-  ## DBI::dbExecute(db, "ALTER TABLE demographic_statistic ENABLE TRIGGER ALL")
-  ## DBI::dbCommit(db)
-  ## on.exit()
-  ## DBI::dbExecute(db, "VACUUM")
+  DBI::dbExecute(con, sql)
 }
 
-table_is_empty <- function(db, tbl) {
-  nrow(DBI::dbGetQuery(db, sprintf("SELECT * FROM %s LIMIT 1", tbl))) == 0L
+table_is_empty <- function(con, tbl) {
+  nrow(DBI::dbGetQuery(con, sprintf("SELECT * FROM %s LIMIT 1", tbl))) == 0L
 }
 
 # init_tables
 # Adds identifiers for the gender, projection, demographic_statistic_type
 # and source tables.
-init_tables <- function(db) {
+init_tables <- function(con) {
   tables <- c("gender", "projection_variant", "demographic_statistic_type",
               "source")
   for (name in tables) {
-    if (table_is_empty(db, name)) {
+    if (table_is_empty(con, name)) {
       message(sprintf("Uploading '%s'", name))
       data <- read_csv(sprintf("meta/%s.csv", name))
-      DBI::dbWriteTable(db, name, data, append = TRUE)
+      DBI::dbWriteTable(con, name, data, append = TRUE)
     }
   }
 
-  if (table_is_empty(db, "country")) {
+  if (table_is_empty(con, "country")) {
     message(sprintf("Uploading '%s'", "country"))
     iso3166 <- read_iso_countries()
     country <- data.frame(id = iso3166$code,
                           name = iso3166$code,
                           stringsAsFactors = FALSE)
-    DBI::dbWriteTable(db, "country", country, append = TRUE)
+    DBI::dbWriteTable(con, "country", country, append = TRUE)
   }
 }
 
@@ -84,7 +75,7 @@ read_iso_countries <- function(filter = TRUE) {
   ret
 }
 
-process_interpolated_population <- function(db, xlfile, gender, sheet_names,
+process_interpolated_population <- function(con, xlfile, gender, sheet_names,
                                             variant_names, source, iso3166) {
   reshape <- function(x, cols) {
     age_to <- age_from <- seq_along(cols) - 1L
@@ -140,7 +131,7 @@ process_interpolated_population <- function(db, xlfile, gender, sheet_names,
     ## Manually satisfy FK constraints:
     fks <- c("gender", "source", "projection_variant",
              "demographic_statistic_type")
-    meta <- setNames(lapply(fks, function(x) DBI::dbReadTable(db, x)), fks)
+    meta <- setNames(lapply(fks, function(x) DBI::dbReadTable(con, x)), fks)
     for (fk in names(meta)) {
       i <- match(d[[fk]], meta[[fk]]$code)
       if (any(is.na(i))) {
@@ -148,18 +139,18 @@ process_interpolated_population <- function(db, xlfile, gender, sheet_names,
       }
       d[[fk]] <- meta[[fk]]$id[i]
     }
-    if (!all(d[["country"]] %in% DBI::dbReadTable(db, "country")$id)) {
+    if (!all(d[["country"]] %in% DBI::dbReadTable(con, "country")$id)) {
       stop("Foreign key violation for country")
     }
 
     message(sprintf("...uploading %d rows", nrow(d)))
 
-    DBI::dbBegin(db)
-    on.exit(DBI::dbRollback(db))
-    DBI::dbExecute(db, "ALTER TABLE demographic_statistic DISABLE TRIGGER ALL")
-    DBI::dbWriteTable(db, "demographic_statistic", d, append = TRUE)
-    DBI::dbExecute(db, "ALTER TABLE demographic_statistic ENABLE TRIGGER ALL")
-    DBI::dbCommit(db)
+    DBI::dbBegin(con)
+    on.exit(CONI::dbRollback(con))
+    DBI::dbExecute(con, "ALTER TABLE demographic_statistic DISABLE TRIGGER ALL")
+    DBI::dbWriteTable(con, "demographic_statistic", d, append = TRUE)
+    DBI::dbExecute(con, "ALTER TABLE demographic_statistic ENABLE TRIGGER ALL")
+    DBI::dbCommit(con)
     on.exit()
   }
 
@@ -175,7 +166,7 @@ process_interpolated_population <- function(db, xlfile, gender, sheet_names,
                  " LIMIT 1",
                  sep = "\n")
     pars <- list(source, projection_variant, gender)
-    nrow(DBI::dbGetQuery(db, sql, pars)) > 0L
+    nrow(DBI::dbGetQuery(con, sql, pars)) > 0L
   }
 
   for (i in seq_along(sheet_names)) {
@@ -190,7 +181,7 @@ process_interpolated_population <- function(db, xlfile, gender, sheet_names,
   }
 }
 
-process_all_interpolated_population <- function(db) {
+process_all_interpolated_population <- function(con) {
   iso3166 <- read_iso_countries()
   info <- read_csv("meta/process.csv")
 
@@ -198,7 +189,7 @@ process_all_interpolated_population <- function(db) {
     x <- info[i, ]
     sheet_names <- strsplit(x$sheet_names, ";\\s*")[[1]]
     variant_names <- strsplit(x$variant_names, ";\\s*")[[1]]
-    process_interpolated_population(db, x$filename, x$gender, sheet_names,
+    process_interpolated_population(con, x$filename, x$gender, sheet_names,
                                     variant_names, x$source, iso3166)
   }
 }
