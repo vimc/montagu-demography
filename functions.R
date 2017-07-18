@@ -1,3 +1,9 @@
+import_demography <- function(db) {
+  download_data()
+  init_tables(db)
+  process_all_interpolated_population(db)
+}
+
 # init_country_table populates an empty country table with
 # the 3-digit alpha code for both name and country, just so
 # the demographic statistic "country" field has something to
@@ -13,40 +19,57 @@ init_country_table <- function(db, iso3166) {
 # For dev only:
 # Code to empty the tables. (Not drop them)
 empty_tables <- function(db) {
-  DBI::dbBegin(db)
-  on.exit(DBI::dbRollback(db))
-  DBI::dbExecute(db, "ALTER TABLE demographic_statistic DISABLE TRIGGER ALL")
+  ## DBI::dbBegin(db)
+  ## on.exit(DBI::dbRollback(db))
+  ## DBI::dbExecute(db, "ALTER TABLE demographic_statistic DISABLE TRIGGER ALL")
 
-  DBI::dbExecute(db, "DELETE FROM demographic_statistic")
-  DBI::dbExecute(db, "DELETE FROM gender")
-  DBI::dbExecute(db, "DELETE FROM projection_variant")
-  DBI::dbExecute(db, "DELETE FROM source")
-  DBI::dbExecute(db, "DELETE FROM demographic_statistic_type")
+  tables <- c("demographic_statistic",
+              "touchstone_demographic_source",
+              "gender", "projection_variant", "source",
+              "demographic_statistic_type")
+  tables_str <- paste(tables, collapse = ", ")
+  sql <- paste("TRUNCATE", tables_str)
+  message(sprintf("Clearing %s", tables_str))
+  DBI::dbExecute(db, sql)
 
-  DBI::dbExecute(db, "ALTER TABLE demographic_statistic ENABLE TRIGGER ALL")
-  DBI::dbCommit(db)
-  on.exit()
-  DBI::dbExecute(db, "VACUUM")
+  ## DBI::dbExecute(db, "ALTER TABLE demographic_statistic ENABLE TRIGGER ALL")
+  ## DBI::dbCommit(db)
+  ## on.exit()
+  ## DBI::dbExecute(db, "VACUUM")
+}
+
+table_is_empty <- function(db, tbl) {
+  nrow(DBI::dbGetQuery(db, sprintf("SELECT * FROM %s LIMIT 1", tbl))) == 0L
 }
 
 # init_tables
 # Adds identifiers for the gender, projection, demographic_statistic_type
 # and source tables.
 init_tables <- function(db) {
-  init1 <- function(name) {
-    data <- read_csv(sprintf("meta/%s.csv", name))
-    DBI::dbWriteTable(db, name, data, append = TRUE)
-  }
   tables <- c("gender", "projection_variant", "demographic_statistic_type",
               "source")
-  for (t in tables) {
-    init1(t)
+  for (name in tables) {
+    if (table_is_empty(db, name)) {
+      message(sprintf("Uploading '%s'", name))
+      data <- read_csv(sprintf("meta/%s.csv", name))
+      DBI::dbWriteTable(db, name, data, append = TRUE)
+    }
+  }
+
+  if (table_is_empty(db, "country")) {
+    message(sprintf("Uploading '%s'", "country"))
+    iso3166 <- read_iso_countries()
+    country <- data.frame(id = iso3166$code,
+                          name = iso3166$code,
+                          stringsAsFactors = FALSE)
+    DBI::dbWriteTable(db, "country", country, append = TRUE)
   }
 }
 
+## NOTE: this does not necessarily do error handling properly:
 download_single <- function(url, dest) {
   if (!file.exists(dest)) {
-    download.file(url,dest,method='libcurl', mode="wb")
+    download.file(url, dest, method='libcurl', mode="wb")
   }
 }
 
@@ -143,10 +166,30 @@ process_interpolated_population <- function(db, xlfile, gender, sheet_names,
     on.exit()
   }
 
+  sql <- paste("SELECT id FROM demographic_statistic",
+               " WHERE source = $1 AND projection_variant = $2",
+               " LIMIT 1",
+               sep = "\n")
+  is_done <- function(source, projection_variant, gender) {
+    sql <- paste("SELECT id FROM demographic_statistic",
+                 " WHERE source = $1",
+                 "   AND projection_variant = $2",
+                 "   AND gender = $3",
+                 " LIMIT 1",
+                 sep = "\n")
+    pars <- list(source, projection_variant, gender)
+    nrow(DBI::dbGetQuery(db, sql, pars)) > 0L
+  }
+
   for (i in seq_along(sheet_names)) {
-    xl <- report_time(read_sheet(sheet_names[[i]]), "read")
-    d <- report_time(process_sheet(xl, variant_names[[i]]), "process")
-    report_time(upload_data(d), "upload")
+    if (is_done(source, variant_names[[i]], gender)) {
+      message(sprintf("skipping %s / %s / %s",
+                      source, variant_names[[i]], gender))
+    } else {
+      xl <- report_time(read_sheet(sheet_names[[i]]), "read")
+      d <- report_time(process_sheet(xl, variant_names[[i]]), "process")
+      report_time(upload_data(d), "upload")
+    }
   }
 }
 
