@@ -132,6 +132,7 @@ process_interpolated_population <- function(db, xlfile, gender, sheet_names,
         stop("Foreign key violation for ", fk)
       }
     }
+    message(sprintf("...uploading %d rows", nrow(d)))
 
     DBI::dbBegin(db)
     on.exit(DBI::dbRollback(db))
@@ -148,7 +149,6 @@ process_interpolated_population <- function(db, xlfile, gender, sheet_names,
     report_time(upload_data(d), "upload")
   }
 }
-
 
 process_all_interpolated_population <- function(db) {
   iso3166 <- read_iso_countries()
