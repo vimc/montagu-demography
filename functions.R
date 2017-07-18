@@ -1,7 +1,8 @@
 import_demography <- function(con) {
   download_data()
+  empty_tables(con)
   init_tables(con)
-  process_all_interpolated_population(con)
+  process_all_population(con)
   DBI::dbExecute(con, "VACUUM")
 }
 
@@ -75,8 +76,9 @@ read_iso_countries <- function(filter = TRUE) {
   ret
 }
 
-process_interpolated_population <- function(con, xlfile, gender, sheet_names,
-                                            variant_names, source, iso3166) {
+process_population <- function(con, xlfile, gender, sheet_names,
+                                  variant_names, source, iso3166, data_type) {
+  
   reshape <- function(x, cols) {
     age_to <- age_from <- seq_along(cols) - 1L
     age_to[length(age_to)] <- 120L
@@ -100,7 +102,8 @@ process_interpolated_population <- function(con, xlfile, gender, sheet_names,
                      na = c("", "…"))
     xl
   }
-  process_sheet <- function(xl, variant) {
+  
+  process_interpolated_population_sheet <- function(xl, variant, data_type) {
     age_cols_pre_1990 <- as.character(c(0:79,"80+"))
 
     # Column "100+" has been renamed to "100" in UNWPP 2017.
@@ -123,9 +126,41 @@ process_interpolated_population <- function(con, xlfile, gender, sheet_names,
     res$year <- NULL
     res$gender <- gender
     res$source <- source
-    res$demographic_statistic_type <- "int_pop"
+    res$demographic_statistic_type <- data_type
     res
   }
+  
+  process_total_population_sheet <- function(xl, variant, data_type) {
+    
+    first_year   <- as.integer(colnames(xl)[6])
+    last_year    <- as.integer(colnames(xl)[length(colnames(xl))])
+    year_cols    <- first_year:last_year
+    no_years     <- length(year_cols)
+    
+    xl$iso3 <- iso3166$code[match(xl$"Country code", iso3166$id)]
+    xl <- as.data.frame(xl[!is.na(xl$iso3), ])
+    no_countries <- length(unique(xl$iso3))
+    
+    res <- data.frame(  year = rep(year_cols,each=no_countries),
+                        country = rep(xl$iso3,no_years),
+                        value = unlist(xl[6:(length(colnames(xl))-1)])
+    )
+    row.names(res) <- NULL    
+    res$age_from <- '0'
+    res$age_to   <- '120'
+    res$projection_variant <- variant
+    res$date_start <- sprintf("%d-07-01", res$year)
+    res$date_end <- sprintf("%d-06-30", res$year+1)
+    res$gender   <- gender
+    res$source   <- source
+    res$demographic_statistic_type <- data_type
+    res$year <- NULL
+    res
+  }
+  
+  
+  
+  
   upload_data <- function(d) {
     ## TODO: this can be done a bit more efficiently, but this is OK for now
     ## Manually satisfy FK constraints:
@@ -146,7 +181,7 @@ process_interpolated_population <- function(con, xlfile, gender, sheet_names,
     message(sprintf("...uploading %d rows", nrow(d)))
 
     DBI::dbBegin(con)
-    on.exit(CONI::dbRollback(con))
+    on.exit(DBI::dbRollback(con))
     DBI::dbExecute(con, "ALTER TABLE demographic_statistic DISABLE TRIGGER ALL")
     DBI::dbWriteTable(con, "demographic_statistic", d, append = TRUE)
     DBI::dbExecute(con, "ALTER TABLE demographic_statistic ENABLE TRIGGER ALL")
@@ -175,13 +210,19 @@ process_interpolated_population <- function(con, xlfile, gender, sheet_names,
                       source, variant_names[[i]], gender))
     } else {
       xl <- report_time(read_sheet(sheet_names[[i]]), "read")
-      d <- report_time(process_sheet(xl, variant_names[[i]]), "process")
+      if (data_type=='int_pop') {
+        d <- report_time(process_interpolated_population_sheet(xl, variant_names[[i]], data_type), "process")
+      } else if (data_type=='tot_pop') {
+        d <- report_time(process_total_population_sheet(xl, variant_names[[i]], data_type), "process")
+      } else {
+        stop(sprintf("data type %s not recognised",data_type))
+      }
       report_time(upload_data(d), "upload")
     }
   }
 }
 
-process_all_interpolated_population <- function(con) {
+process_all_population <- function(con) {
   iso3166 <- read_iso_countries()
   info <- read_csv("meta/process.csv")
 
@@ -189,8 +230,8 @@ process_all_interpolated_population <- function(con) {
     x <- info[i, ]
     sheet_names <- strsplit(x$sheet_names, ";\\s*")[[1]]
     variant_names <- strsplit(x$variant_names, ";\\s*")[[1]]
-    process_interpolated_population(con, x$filename, x$gender, sheet_names,
-                                    variant_names, x$source, iso3166)
+    process_population(con, x$filename, x$gender, sheet_names,
+                                  variant_names, x$source, iso3166, x$data_type)
   }
 }
 

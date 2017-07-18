@@ -1,2 +1,3 @@
 "code","age_interpretation","name"
 "int_pop","Age (years)","Interpolated Population"
+"tot_pop","Age (years)","Total Population"
