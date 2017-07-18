@@ -2,18 +2,7 @@ import_demography <- function(db) {
   download_data()
   init_tables(db)
   process_all_interpolated_population(db)
-}
-
-# init_country_table populates an empty country table with
-# the 3-digit alpha code for both name and country, just so
-# the demographic statistic "country" field has something to
-# link to.
-init_country_table <- function(db, iso3166) {
-  DBI::dbExecute(db,"DELETE FROM country")
-  country <- data.frame(id = iso3166$code,
-                        name = iso3166$code,
-                        stringsAsFactors = FALSE)
-  DBI::dbWriteTable(db, "country", country, append = TRUE)
+  DBI::dbExecute(db, "VACUUM")
 }
 
 # For dev only:
@@ -147,14 +136,22 @@ process_interpolated_population <- function(db, xlfile, gender, sheet_names,
     res
   }
   upload_data <- function(d) {
+    ## TODO: this can be done a bit more efficiently, but this is OK for now
     ## Manually satisfy FK constraints:
-    fks <- c("gender", "source", "country", "projection_variant",
+    fks <- c("gender", "source", "projection_variant",
              "demographic_statistic_type")
-    for (fk in fks) {
-      if (!all(d[[fk]] %in% DBI::dbReadTable(db, fk)$id)) {
+    meta <- setNames(lapply(fks, function(x) DBI::dbReadTable(db, x)), fks)
+    for (fk in names(meta)) {
+      i <- match(d[[fk]], meta[[fk]]$code)
+      if (any(is.na(i))) {
         stop("Foreign key violation for ", fk)
       }
+      d[[fk]] <- meta[[fk]]$id[i]
     }
+    if (!all(d[["country"]] %in% DBI::dbReadTable(db, "country")$id)) {
+      stop("Foreign key violation for country")
+    }
+
     message(sprintf("...uploading %d rows", nrow(d)))
 
     DBI::dbBegin(db)
@@ -182,7 +179,7 @@ process_interpolated_population <- function(db, xlfile, gender, sheet_names,
   }
 
   for (i in seq_along(sheet_names)) {
-    if (is_done(source, variant_names[[i]], gender)) {
+    if (FALSE && is_done(source, variant_names[[i]], gender)) {
       message(sprintf("skipping %s / %s / %s",
                       source, variant_names[[i]], gender))
     } else {
@@ -221,6 +218,6 @@ read_csv <- function(...) {
 report_time <- function(expr, label) {
   t <- system.time(res <- force(expr))
   message(sprintf("...%s time: %2.2f s (%2.2f s wall)",
-                  label, t[["elapsed"]], summary(t)[["user"]]))
+                  label, summary(t)[["user"]], t[["elapsed"]]))
   res
 }
