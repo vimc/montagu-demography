@@ -48,7 +48,7 @@ if [ $SUCCESS -eq 0 ]; then
              -t demographic_statistic_type \
              -t source \
              -Fc montagu \
-             > montagu.dump
+             > demography.dump
     SUCCESS=$?
     if [ $SUCCESS -eq 0 ]; then
         echo "Export success"
