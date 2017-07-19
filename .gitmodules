@@ -1,0 +1,3 @@
+[submodule "montagu-db"]
+	path = montagu-db
+	url = https://github.com/vimc/montagu-db.git
