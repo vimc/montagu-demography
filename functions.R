@@ -29,28 +29,16 @@ table_is_empty <- function(con, tbl) {
 init_tables <- function(con) {
   tables <- c("gender", "projection_variant", "demographic_statistic_type",
               "source")
-  for (name in tables) {
-    if (table_is_empty(con, name)) {
-      message(sprintf("Uploading '%s'", name))
-      data <- read_csv(sprintf("meta/%s.csv", name))
-      DBI::dbWriteTable(con, name, data, append = TRUE)
-    }
+  for (table in tables) {
+    upload_csv(con, file.path("meta", paste0(table, ".csv")))
   }
-
-  if (table_is_empty(con, "country")) {
-    message(sprintf("Uploading '%s'", "country"))
-    iso3166 <- read_iso_countries()
-    country <- data.frame(id = iso3166$code,
-                          name = iso3166$code,
-                          stringsAsFactors = FALSE)
-    DBI::dbWriteTable(con, "country", country, append = TRUE)
-  }
+  upload_csv(con, "montagu-db/minimal/common/country.csv")
 }
 
 ## NOTE: this does not necessarily do error handling properly:
 download_single <- function(url, dest) {
   if (!file.exists(dest)) {
-    download.file(url, dest, method='libcurl', mode="wb")
+    download.file(url, dest, method = 'libcurl', mode = "wb")
   }
 }
 
@@ -64,21 +52,9 @@ download_data <- function() {
   }
 }
 
-read_iso_countries <- function(filter = TRUE) {
-  iso3166 <- xml2::read_xml("data/iso3166.xml")
-  xml_countries <- xml2::xml_find_all(iso3166, "//c")
-  ret <- data.frame(id = as.numeric(xml2::xml_attr(xml_countries, "n3")),
-                    code = xml2::xml_attr(xml_countries, "c3"),
-                    stringsAsFactors = FALSE)
-  if (filter) {
-    ret <- ret[ret$code %in% readLines("meta/countries_keep.txt"), ]
-  }
-  ret
-}
-
 process_population <- function(con, xlfile, gender, sheet_names,
-                                  variant_names, source, iso3166, data_type) {
-  
+                               variant_names, source, data_type,
+                               country_tr) {
   reshape <- function(x, cols) {
     age_to <- age_from <- seq_along(cols) - 1L
     age_to[length(age_to)] <- 120L
@@ -100,66 +76,55 @@ process_population <- function(con, xlfile, gender, sheet_names,
     message(sprintf("Reading %s:%s", xlfile, sheet))
     xl <- read_excel(xlfile, sheet = sheet, skip = 16, col_names = TRUE,
                      na = c("", "…"))
-    xl
+    xl$iso3 <- country_tr$id[match(xl$"Country code", country_tr$code)]
+    as.data.frame(xl[!is.na(xl$iso3), ])
   }
-  
-  process_interpolated_population_sheet <- function(xl, variant, data_type) {
-    age_cols_pre_1990 <- as.character(c(0:79,"80+"))
 
+  process_interpolated_population_sheet <- function(xl, variant, data_type) {
+    age_cols_pre_1990 <- as.character(c(0:79, "80+"))
     # Column "100+" has been renamed to "100" in UNWPP 2017.
     if ("100+" %in% colnames(xl)) {
-      age_cols_from_1990 <- as.character(c(0:99,"100+"))
+      age_cols_from_1990 <- as.character(c(0:99, "100+"))
     } else {
       age_cols_from_1990 <- as.character(c(0:100))
     }
-
-    xl$iso3 <- iso3166$code[match(xl$"Country code", iso3166$id)]
-    xl <- as.data.frame(xl[!is.na(xl$iso3), ])
     xl$year <- xl[[6]]
-
-    res <- rbind(reshape(xl[xl$year < 1990, ], age_cols_pre_1990),
+    res <- rbind(reshape(xl[xl$year <  1990, ], age_cols_pre_1990),
                  reshape(xl[xl$year >= 1990, ], age_cols_from_1990))
-    row.names(res) <- NULL
-    res$projection_variant <- variant
+    process_shared(res, gender, source, variant, data_type)
+  }
+  
+  process_total_population_sheet <- function(xl, variant, data_type) {
+    i <- grep(RE_YEAR, names(xl))
+    if (i[[1L]] != 6L) {
+      stop("Unexpected data format!")
+    }
+    year_cols <- names(xl)[i]
+
+    res <- data.frame(
+      year = rep(as.integer(year_cols), each = length(unique(xl$iso3))),
+      country = rep(xl$iso3, length(year_cols)),
+      value = unlist(xl[year_cols]),
+      stringsAsFactors = FALSE)
+    res$age_from <- 0
+    res$age_to   <- 120
+    process_shared(res, gender, source, variant, data_type)
+  }
+
+  ## This converts columns to the format we want them on montagu
+  ## (date_start, date_end) and sets the metadata columns
+  process_shared <- function(res, gender, source, variant, data_type) {
+    row.names(res) <- NULL    
     res$date_start <- sprintf("%d-07-01", res$year)
     res$date_end <- sprintf("%d-06-30", res$year + 1)
     res$year <- NULL
+
+    res$projection_variant <- variant
     res$gender <- gender
     res$source <- source
     res$demographic_statistic_type <- data_type
     res
   }
-  
-  process_total_population_sheet <- function(xl, variant, data_type) {
-    
-    first_year   <- as.integer(colnames(xl)[6])
-    last_year    <- as.integer(colnames(xl)[length(colnames(xl))])
-    year_cols    <- first_year:last_year
-    no_years     <- length(year_cols)
-    
-    xl$iso3 <- iso3166$code[match(xl$"Country code", iso3166$id)]
-    xl <- as.data.frame(xl[!is.na(xl$iso3), ])
-    no_countries <- length(unique(xl$iso3))
-    
-    res <- data.frame(  year = rep(year_cols,each=no_countries),
-                        country = rep(xl$iso3,no_years),
-                        value = unlist(xl[6:(length(colnames(xl))-1)])
-    )
-    row.names(res) <- NULL    
-    res$age_from <- '0'
-    res$age_to   <- '120'
-    res$projection_variant <- variant
-    res$date_start <- sprintf("%d-07-01", res$year)
-    res$date_end <- sprintf("%d-06-30", res$year+1)
-    res$gender   <- gender
-    res$source   <- source
-    res$demographic_statistic_type <- data_type
-    res$year <- NULL
-    res
-  }
-  
-  
-  
   
   upload_data <- function(d) {
     ## TODO: this can be done a bit more efficiently, but this is OK for now
@@ -210,12 +175,12 @@ process_population <- function(con, xlfile, gender, sheet_names,
                       source, variant_names[[i]], gender))
     } else {
       xl <- report_time(read_sheet(sheet_names[[i]]), "read")
-      if (data_type=='int_pop') {
+      if (data_type == 'int_pop') {
         d <- report_time(process_interpolated_population_sheet(xl, variant_names[[i]], data_type), "process")
-      } else if (data_type=='tot_pop') {
+      } else if (data_type == 'tot_pop') {
         d <- report_time(process_total_population_sheet(xl, variant_names[[i]], data_type), "process")
       } else {
-        stop(sprintf("data type %s not recognised",data_type))
+        stop(sprintf("data type %s not recognised", data_type))
       }
       report_time(upload_data(d), "upload")
     }
@@ -223,7 +188,8 @@ process_population <- function(con, xlfile, gender, sheet_names,
 }
 
 process_all_population <- function(con) {
-  iso3166 <- read_iso_countries()
+  country_tr <- read_iso_countries()
+
   info <- read_csv("meta/process.csv")
 
   for (i in seq_len(nrow(info))) {
@@ -231,7 +197,7 @@ process_all_population <- function(con) {
     sheet_names <- strsplit(x$sheet_names, ";\\s*")[[1]]
     variant_names <- strsplit(x$variant_names, ";\\s*")[[1]]
     process_population(con, x$filename, x$gender, sheet_names,
-                                  variant_names, x$source, iso3166, x$data_type)
+                       variant_names, x$source, x$data_type, country_tr)
   }
 }
 
@@ -253,3 +219,23 @@ report_time <- function(expr, label) {
                   label, summary(t)[["user"]], t[["elapsed"]]))
   res
 }
+
+upload_csv <- function(con, filename) {
+  table <- sub("\\.csv$", "", basename(filename))
+  if (table_is_empty(con, table)) {
+    message(sprintf("Uploading %s => '%s'", filename, table))
+    data <- read_csv(filename)
+    DBI::dbWriteTable(con, table, data, append = TRUE)
+  }
+}
+
+read_iso_countries <- function() {
+  iso3166 <- xml2::read_xml("data/iso3166.xml")
+  xml_countries <- xml2::xml_find_all(iso3166, "//c")
+  data.frame(code = as.numeric(xml2::xml_attr(xml_countries, "n3")),
+             name = xml2::xml_attr(xml_countries, "n"),
+             id = xml2::xml_attr(xml_countries, "c3"),
+             stringsAsFactors = FALSE)
+}
+
+RE_YEAR <- "^[0-9]{4}$"
