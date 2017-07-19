@@ -1,6 +1,8 @@
-import_demography <- function(con) {
+import_demography <- function(con, clear_first = TRUE) {
   download_data()
-  empty_tables(con)
+  if (clear_first) {
+    empty_tables(con)
+  }
   init_tables(con)
   process_all_population(con)
   DBI::dbExecute(con, "VACUUM")
@@ -55,6 +57,7 @@ download_data <- function() {
 process_population <- function(con, xlfile, gender, sheet_names,
                                variant_names, source, data_type,
                                country_tr) {
+
   reshape <- function(x, cols) {
     age_to <- age_from <- seq_along(cols) - 1L
     age_to[length(age_to)] <- 120L
@@ -154,31 +157,43 @@ process_population <- function(con, xlfile, gender, sheet_names,
     on.exit()
   }
 
-  sql <- paste("SELECT id FROM demographic_statistic",
-               " WHERE source = $1 AND projection_variant = $2",
-               " LIMIT 1",
-               sep = "\n")
-  is_done <- function(source, projection_variant, gender) {
-    sql <- paste("SELECT id FROM demographic_statistic",
-                 " WHERE source = $1",
-                 "   AND projection_variant = $2",
-                 "   AND gender = $3",
+  is_done <- function(source, projection_variant, gender, data_type) {
+    sql <- paste("SELECT *",
+                 "  FROM demographic_statistic",
+                 "  JOIN source",
+                 "    ON source.id = demographic_statistic.source",
+                 "  JOIN projection_variant",
+                 "    ON projection_variant.id =",
+                 "       demographic_statistic.projection_variant",
+                 "  JOIN gender",
+                 "    ON gender.id = demographic_statistic.gender",
+                 "  JOIN demographic_statistic_type",
+                 "    ON demographic_statistic_type.id =",
+                 "       demographic_statistic.demographic_statistic_type",
+                 " WHERE source.code = $1",
+                 "   AND projection_variant.code = $2",
+                 "   AND gender.code = $3",
+                 "   AND demographic_statistic_type.code = $4",
                  " LIMIT 1",
                  sep = "\n")
-    pars <- list(source, projection_variant, gender)
+    pars <- list(source, projection_variant, gender, data_type)
     nrow(DBI::dbGetQuery(con, sql, pars)) > 0L
   }
 
   for (i in seq_along(sheet_names)) {
-    if (FALSE && is_done(source, variant_names[[i]], gender)) {
-      message(sprintf("skipping %s / %s / %s",
-                      source, variant_names[[i]], gender))
+    if (is_done(source, variant_names[[i]], gender, data_type)) {
+      message(sprintf("skipping %s / %s / %s / %s",
+                      source, variant_names[[i]], gender, data_type))
     } else {
       xl <- report_time(read_sheet(sheet_names[[i]]), "read")
       if (data_type == 'int_pop') {
-        d <- report_time(process_interpolated_population_sheet(xl, variant_names[[i]], data_type), "process")
+        d <- report_time(
+          process_interpolated_population_sheet(xl, variant_names[[i]],
+                                                data_type), "process")
       } else if (data_type == 'tot_pop') {
-        d <- report_time(process_total_population_sheet(xl, variant_names[[i]], data_type), "process")
+        d <- report_time(
+          process_total_population_sheet(xl, variant_names[[i]], data_type),
+          "process")
       } else {
         stop(sprintf("data type %s not recognised", data_type))
       }
