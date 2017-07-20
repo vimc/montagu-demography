@@ -83,6 +83,32 @@ process_population <- function(con, xlfile, gender, sheet_names,
     as.data.frame(xl[!is.na(xl$iso3), ])
   }
 
+  process_age_specific_fertility_sheet <- function(xl, variant, data_type) {
+    #Column 6 Title Period (yyyy-yyyy)
+    #Column 7 onwards: age (aa-bb)
+    
+    age_indexes <- as.numeric(grep(RE_AGE_SPAN, names(xl)))
+    if (age_indexes[[1L]] != 7L) {
+      stop("Unexpected data format!")
+    }
+    
+    age_cols <- names(xl)[age_indexes]
+    start_age <- as.integer(substr(age_cols,1,2))
+    
+    start_years = as.numeric(substring(unique(xl$"Period"),1,4))
+    no_countries <- length(unique(xl$iso3))
+    no_ages <- length(age_cols)
+    no_years <- length(start_years)
+    
+    res <- data.frame(
+      year = rep(start_years, no_ages * no_countries),
+      country = rep( rep(unique(xl$iso3), each=no_years), no_ages),
+      value = unlist(xl[age_cols]),
+      age_from = rep(start_age, each=no_countries * no_years),
+      age_to = rep(start_age+4, each=no_countries * no_years),
+      stringsAsFactors = FALSE)
+    process_shared(res, gender, source, variant, data_type, year_span = 5)
+  }
 
   process_birth_gender_sheet <- function(xl, variant, data_type) {
     year_indexes <- as.numeric(grep(RE_YEAR_SPAN, names(xl)))
@@ -101,7 +127,6 @@ process_population <- function(con, xlfile, gender, sheet_names,
     res$age_from <- 0
     res$age_to   <- 0
     process_shared(res, gender, source, variant, data_type, year_span = 5)
-    
   }
   
   process_interpolated_population_sheet <- function(xl, variant, data_type, remove_year) {
@@ -230,6 +255,11 @@ process_population <- function(con, xlfile, gender, sheet_names,
         d <- report_time(
           process_birth_gender_sheet(xl, variant_names[[i]], data_type),
           "process")
+      
+      } else if (data_type == 'as_fert') {
+        d <- report_time(
+          process_age_specific_fertility_sheet(xl, variant_names[[i]], data_type),
+          "process")
 
       } else {
         stop(sprintf("data type %s not recognised", data_type))
@@ -293,9 +323,10 @@ read_iso_countries <- function() {
 }
 
 filter_iso_countries <- function(ret) {
-  ret <- ret[ret$id %in% readLines("meta/countries_keep.txt"), ]
+  ret[ret$id %in% readLines("meta/countries_keep.txt"), ]
 }
 
 
 RE_YEAR <- "^[0-9]{4}$"
 RE_YEAR_SPAN <- "^[0-9]{4}-[0-9]{4}$"
+RE_AGE_SPAN <- "^[0-9]{2}-[0-9]{2}$"
