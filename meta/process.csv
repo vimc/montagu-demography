@@ -1,4 +1,5 @@
 "filename","gender","sheet_names","variant_names","source","data_type"
+"data/wpp2017/wpp2017_fert_f02_sex_ratio_at_birth.xlsx","both","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2017","birth_mf"
 "data/wpp2012/wpp2012_pop_f01_1_total_population_both_sexes.xls","both","ESTIMATES;MEDIUM FERTILITY","unwpp_estimates;unwpp_medium_variant","unwpp_2012","tot_pop"
 "data/wpp2012/wpp2012_pop_f01_2_total_population_male.xls","male","ESTIMATES;MEDIUM FERTILITY","unwpp_estimates;unwpp_medium_variant","unwpp_2012","tot_pop"
 "data/wpp2012/wpp2012_pop_f01_3_total_population_female.xls","female","ESTIMATES;MEDIUM FERTILITY","unwpp_estimates;unwpp_medium_variant","unwpp_2012","tot_pop"

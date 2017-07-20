@@ -83,6 +83,27 @@ process_population <- function(con, xlfile, gender, sheet_names,
     as.data.frame(xl[!is.na(xl$iso3), ])
   }
 
+
+  process_birth_gender_sheet <- function(xl, variant, data_type) {
+    year_indexes <- as.numeric(grep(RE_YEAR_SPAN, names(xl)))
+    if (year_indexes[[1L]] != 6L) {
+      stop("Unexpected data format!")
+    }
+    
+    year_cols <- names(xl)[year_indexes]
+    start_years <- as.integer(substr(year_cols,1,4))
+    
+    res <- data.frame(
+      year = rep(start_years, each = length(unique(xl$iso3))),
+      country = rep(xl$iso3, length(year_cols)),
+      value = unlist(xl[year_cols]),
+      stringsAsFactors = FALSE)
+    res$age_from <- 0
+    res$age_to   <- 0
+    process_shared(res, gender, source, variant, data_type, year_span = 5)
+    
+  }
+  
   process_interpolated_population_sheet <- function(xl, variant, data_type) {
     age_cols_pre_1990 <- as.character(c(0:79, "80+"))
     # Column "100+" has been renamed to "100" in UNWPP 2017.
@@ -94,7 +115,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
     xl$year <- xl[[6]]
     res <- rbind(reshape(xl[xl$year <  1990, ], age_cols_pre_1990),
                  reshape(xl[xl$year >= 1990, ], age_cols_from_1990))
-    process_shared(res, gender, source, variant, data_type)
+    process_shared(res, gender, source, variant, data_type, year_span = 1)
   }
   
   process_total_population_sheet <- function(xl, variant, data_type) {
@@ -111,15 +132,15 @@ process_population <- function(con, xlfile, gender, sheet_names,
       stringsAsFactors = FALSE)
     res$age_from <- 0
     res$age_to   <- 120
-    process_shared(res, gender, source, variant, data_type)
+    process_shared(res, gender, source, variant, data_type, year_span = 1)
   }
 
   ## This converts columns to the format we want them on montagu
   ## (date_start, date_end) and sets the metadata columns
-  process_shared <- function(res, gender, source, variant, data_type) {
+  process_shared <- function(res, gender, source, variant, data_type, year_span) {
     row.names(res) <- NULL    
     res$date_start <- sprintf("%d-07-01", res$year)
-    res$date_end <- sprintf("%d-06-30", res$year + 1)
+    res$date_end <- sprintf("%d-06-30", res$year + year_span)
     res$year <- NULL
 
     res$projection_variant <- variant
@@ -194,6 +215,12 @@ process_population <- function(con, xlfile, gender, sheet_names,
         d <- report_time(
           process_total_population_sheet(xl, variant_names[[i]], data_type),
           "process")
+        
+      } else if (data_type == 'birth_mf') {
+        d <- report_time(
+          process_birth_gender_sheet(xl, variant_names[[i]], data_type),
+          "process")
+
       } else {
         stop(sprintf("data type %s not recognised", data_type))
       }
@@ -204,6 +231,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
 
 process_all_population <- function(con) {
   country_tr <- read_iso_countries()
+  country_tr <- filter_iso_countries(country_tr)
 
   info <- read_csv("meta/process.csv")
 
@@ -253,4 +281,10 @@ read_iso_countries <- function() {
              stringsAsFactors = FALSE)
 }
 
+filter_iso_countries <- function(ret) {
+  ret <- ret[ret$id %in% readLines("meta/countries_keep.txt"), ]
+}
+
+
 RE_YEAR <- "^[0-9]{4}$"
+RE_YEAR_SPAN <- "^[0-9]{4}-[0-9]{4}$"
