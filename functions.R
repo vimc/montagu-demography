@@ -55,7 +55,7 @@ download_data <- function() {
 }
 
 process_population <- function(con, xlfile, gender, sheet_names,
-                               variant_names, source, data_type,
+                               remove_year, variant_names, source, data_type,
                                country_tr) {
 
   reshape <- function(x, cols) {
@@ -104,7 +104,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
     
   }
   
-  process_interpolated_population_sheet <- function(xl, variant, data_type) {
+  process_interpolated_population_sheet <- function(xl, variant, data_type, remove_year) {
     age_cols_pre_1990 <- as.character(c(0:79, "80+"))
     # Column "100+" has been renamed to "100" in UNWPP 2017.
     if ("100+" %in% colnames(xl)) {
@@ -112,13 +112,23 @@ process_population <- function(con, xlfile, gender, sheet_names,
     } else {
       age_cols_from_1990 <- as.character(c(0:100))
     }
+    
     xl$year <- xl[[6]]
+    if (as.numeric(remove_year)>0) {
+      xl<-xl[!(xl$year %in% remove_year), ]
+    }
+    
+    
     res <- rbind(reshape(xl[xl$year <  1990, ], age_cols_pre_1990),
                  reshape(xl[xl$year >= 1990, ], age_cols_from_1990))
     process_shared(res, gender, source, variant, data_type, year_span = 1)
   }
   
-  process_total_population_sheet <- function(xl, variant, data_type) {
+  process_total_population_sheet <- function(xl, variant, data_type, remove_year) {
+    if (as.numeric(remove_year)>0){
+      xl[[remove_year]]<-NULL
+    }
+    
     i <- grep(RE_YEAR, names(xl))
     if (i[[1L]] != 6L) {
       stop("Unexpected data format!")
@@ -210,10 +220,10 @@ process_population <- function(con, xlfile, gender, sheet_names,
       if (data_type == 'int_pop') {
         d <- report_time(
           process_interpolated_population_sheet(xl, variant_names[[i]],
-                                                data_type), "process")
+                                                data_type, remove_year[[i]]), "process")
       } else if (data_type == 'tot_pop') {
         d <- report_time(
-          process_total_population_sheet(xl, variant_names[[i]], data_type),
+          process_total_population_sheet(xl, variant_names[[i]], data_type, remove_year[[i]]),
           "process")
         
       } else if (data_type == 'birth_mf') {
@@ -239,7 +249,8 @@ process_all_population <- function(con) {
     x <- info[i, ]
     sheet_names <- strsplit(x$sheet_names, ";\\s*")[[1]]
     variant_names <- strsplit(x$variant_names, ";\\s*")[[1]]
-    process_population(con, x$filename, x$gender, sheet_names,
+    remove_year <- strsplit(x$remove_year, ";\\s*")[[1]]
+    process_population(con, x$filename, x$gender, sheet_names, remove_year, 
                        variant_names, x$source, x$data_type, country_tr)
   }
 }
