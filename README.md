@@ -65,9 +65,8 @@ MONTAGU_DB_PORT=8888
 * Birth Gender Ratio, WPP 2017 revision.
 * Age-specific Fertility, WPP 2017 revision.
 
-Note:
-
-(Population Data for Marshall Islands and Tuvalu are not currently available in age-distributed form. They are only available in Total Population, Both-Gender)
+Note: Population Data for Marshall Islands and Tuvalu are not currently available in age-distributed form. They are only available in Total Population, Both-Gender.
+Kosovo is not available at all - known issue.
 
 ### Steps for adding new datasets (to be confirmed)
 
