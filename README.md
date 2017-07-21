@@ -54,18 +54,23 @@ MONTAGU_DB_PORT=8888
 
 ### Current datasets
 
-* Interpolated Population, WPP 2012 revision.
-* Interpolated Population, WPP 2015 revision.
-* Interpolated Population, WPP 2017 revision.
+|Source      | Data                        | Units               | Years [Step]  | Ages [Step]        | Gender |
+|------------|-----------------------------|---------------------|---------------|--------------------|--------|
+| WPP_2012   | Interpolated Population     | People              | 1950-2100 [1] | 0-80+/100+ [1]     | M/F/B  |
+| WPP_2015   | Interpolated Population     | People              | 1950-2100 [1] | 0-80+/100+ [1]     | M/F/B  |
+| WPP_2017   | Interpolated Population     | People              | 1950-2100 [1] | 0-80+/100+ [1]     | M/F/B  |
+| WPP_2012   | Total Population            | People              | 1950-2100 [1] |         -          | M/F/B  |
+| WPP_2015   | Total Population            | People              | 1950-2100 [1] |         -          | M/F/B  |
+| WPP_2017   | Total Population            | People              | 1950-2100 [1] |         -          | M/F/B  |
+| WPP_2017   | Sex Ratio At Birth          | m. per f. births    | 1950-2100 [5] |         -          |   B    |
+| WPP_2017   | Age-specific fertility      | Births              | 1950-2100 [5] | (mother) 15-49 [5] |   F    |
+| CM_2015    | U5MR rtality rate           | deaths / live birth |~1950-2015 [1] |         -          |   B    |
+| CM_2015    | IMR Infant mortality rate   | deaths / live birth |~1950-2015 [1] |         -          |   B    |
+| CM_2015    | NMR Neonatal mortality rate | deaths / live birth |~1950-2015 [1] |         -          |   B    |
 
-* Total Population, WPP 2012 revision. 
-* Total Population, WPP 2015 revision.
-* Total Population, WPP 2017 revision. 
+Note 1: Demographic statistics are given in units of people, rather than 1000s. 
 
-* Birth Gender Ratio, WPP 2017 revision.
-* Age-specific Fertility, WPP 2017 revision.
-
-Note: Population Data for Marshall Islands and Tuvalu are not currently available in age-distributed form. They are only available in Total Population, Both-Gender.
+Note 2: Population Data for Marshall Islands and Tuvalu are not currently available in age-distributed form. They are only available in Total Population, Both-Gender.
 Kosovo is not available at all - known issue.
 
 ### Steps for adding new datasets (to be confirmed)
