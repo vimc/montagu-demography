@@ -48,7 +48,7 @@ MONTAGU_DB_PORT=8888
 
 ### Development/Debugging
 
-* `empty_tables(db)` empties the `demographic_statistic_type`, `gender`, `projection_variant`, `source`, and `demographic_statistic` tables.
+* `empty_tables(db)` empties the `demographic_statistic_type`, `gender`, `demographic_variant`, `demographic_source`, and `demographic_statistic` tables.
 
 ## Data Supported
 
