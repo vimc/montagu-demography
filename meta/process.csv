@@ -1,4 +1,5 @@
 "filename","gender","sheet_names","variant_names","source","data_type","remove_year"
+"data/cm2015/ratesdeaths_allindicators.xlsx","both","Rates and Deaths","cm_2015","cm_2015","cm_2015","0"
 "data/wpp2017/wpp2017_fert_f02_sex_ratio_at_birth.xlsx","both","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2017","birth_mf","0;0"
 "data/wpp2017/wpp2017_fert_f07_age_specific_fertility.xlsx","female","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2017","as_fert","0;0"
 "data/wpp2012/wpp2012_pop_f01_1_total_population_both_sexes.xls","both","ESTIMATES;MEDIUM FERTILITY","unwpp_estimates;unwpp_medium_variant","unwpp_2012","tot_pop","0;2010"

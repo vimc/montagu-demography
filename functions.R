@@ -56,7 +56,7 @@ download_data <- function() {
 }
 
 process_population <- function(con, xlfile, gender, sheet_names,
-                               remove_year, variant_names, source, data_type,
+                               remove_year, variant_names, dsource, data_type,
                                country_tr) {
 
   reshape <- function(x, cols) {
@@ -76,14 +76,69 @@ process_population <- function(con, xlfile, gender, sheet_names,
                country = x$iso3,
                value = value)
   }
-  read_sheet <- function(sheet) {
+  
+  read_sheet <- function(sheet, skip, country_col, iso_numeric_to_alpha) {
     message(sprintf("Reading %s:%s", xlfile, sheet))
-    xl <- read_excel(xlfile, sheet = sheet, skip = 16, col_names = TRUE,
-                     na = c("", "…"))
-    xl$iso3 <- country_tr$id[match(xl$"Country code", country_tr$code)]
+    xl <- read_excel(xlfile, sheet = sheet, skip = skip, col_names = TRUE, na = c("", "…"))
+    
+    if (iso_numeric_to_alpha) {
+      xl$iso3 <- country_tr$id[match(xl[[country_col]], country_tr$code)]
+    } else {
+      ## ISO is already alpha (eg, ChildMortality)
+      xl$iso3 <- country_tr$id[match(xl[[country_col]], country_tr$id)]
+    }
+    
     as.data.frame(xl[!is.na(xl$iso3), ])
   }
+  
+  read_sheet_unwpp <- function(sheet) {
+    read_sheet(sheet, skip = 16, country_col = "Country code", iso_numeric_to_alpha = TRUE)
+  }
+  
+  read_sheet_cm <- function(sheet) {
+    read_sheet(sheet, skip=6, country_col = "ISO Code", iso_numeric_to_alpha = FALSE)
+  }
 
+
+  process_child_mortality <- function(xl, dsource) {
+    rightString <- function(s,n) {
+      substr(s, (nchar(s)-n)+1, nchar(s))
+    }
+    
+    select_cols <- sort(c(
+      grep("^IMR.[0-9]{4}$", names(xl)),
+      grep("^U5MR.[0-9]{4}$", names(xl)),
+      grep("^NMR.[0-9]{4}$", names(xl))
+    ))
+    
+    no_countries <- length(unique(xl$iso3))
+    variants <- c("cm_lower","cm_median","cm_upper")
+    dtypes <- c("cm_u5mr","cm_imr","cm_nmr")
+    years <- rightString( colnames(xl)[select_cols], 4)
+    no_years <- length(years)
+    no_variants <- length(variants)
+    no_variables <- length(dtypes)
+
+    res <- data.frame(
+      year = rep(years, each = (no_countries * no_variants)),
+      value = unlist(xl[select_cols]),
+      age_from = 0,
+      age_to = 0,
+      gender = "both",
+      country = xl$iso3,
+      demographic_statistic_type = rep(dtypes, each = no_countries * no_variants * length(unique(years))),
+      demographic_variant = rep(variants, no_countries * no_years),
+      demographic_source = dsource,
+      stringsAsFactors = FALSE
+    )
+    res <- res[!is.na(res$value), ]
+    res$value <- res$value/1000.0
+    row.names(res) <- NULL
+    res
+  }
+  
+  
+  
   process_age_specific_fertility_sheet <- function(xl, variant, data_type) {
     #Column 6 Title Period (yyyy-yyyy)
     #Column 7 onwards: age (aa-bb)
@@ -104,11 +159,11 @@ process_population <- function(con, xlfile, gender, sheet_names,
     res <- data.frame(
       year = rep(start_years, no_ages * no_countries),
       country = rep( rep(unique(xl$iso3), each=no_years), no_ages),
-      value = unlist(xl[age_cols]),
+      value = unlist(xl[age_cols])/1000,
       age_from = rep(start_age, each=no_countries * no_years),
       age_to = rep(start_age+4, each=no_countries * no_years),
       stringsAsFactors = FALSE)
-    process_shared(res, gender, source, variant, data_type)
+    process_shared(res, gender, dsource, variant, data_type)
   }
 
   process_birth_gender_sheet <- function(xl, variant, data_type) {
@@ -125,9 +180,10 @@ process_population <- function(con, xlfile, gender, sheet_names,
       country = rep(xl$iso3, length(year_cols)),
       value = unlist(xl[year_cols]),
       stringsAsFactors = FALSE)
+    
     res$age_from <- 0
     res$age_to   <- 0
-    process_shared(res, gender, source, variant, data_type)
+    process_shared(res, gender, dsource, variant, data_type)
   }
   
   process_interpolated_population_sheet <- function(xl, variant, data_type, remove_year) {
@@ -147,7 +203,9 @@ process_population <- function(con, xlfile, gender, sheet_names,
     
     res <- rbind(reshape(xl[xl$year <  1990, ], age_cols_pre_1990),
                  reshape(xl[xl$year >= 1990, ], age_cols_from_1990))
-    process_shared(res, gender, source, variant, data_type)
+    
+    res$value <- res$value * 1000
+    process_shared(res, gender, dsource, variant, data_type)
   }
   
   process_total_population_sheet <- function(xl, variant, data_type, remove_year) {
@@ -168,15 +226,16 @@ process_population <- function(con, xlfile, gender, sheet_names,
       stringsAsFactors = FALSE)
     res$age_from <- 0
     res$age_to   <- 120
-    process_shared(res, gender, source, variant, data_type)
+    res$value <- res$value * 1000
+    process_shared(res, gender, dsource, variant, data_type)
   }
 
   ## Common behaviour for all process functions
-  process_shared <- function(res, gender, source, variant, data_type) {
+  process_shared <- function(res, gender, dsource, variant, data_type) {
     row.names(res) <- NULL    
     res$demographic_variant <- variant
     res$gender <- gender
-    res$demographic_source <- source
+    res$demographic_source <- dsource
     res$demographic_statistic_type <- data_type
     res
   }
@@ -209,7 +268,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
     on.exit()
   }
 
-  is_done <- function(source, demographic_variant, gender, data_type) {
+  is_done <- function(dsource, demographic_variant, gender, data_type) {
     sql <- paste("SELECT *",
                  "  FROM demographic_statistic",
                  "  JOIN demographic_source",
@@ -228,33 +287,44 @@ process_population <- function(con, xlfile, gender, sheet_names,
                  "   AND demographic_statistic_type.code = $4",
                  " LIMIT 1",
                  sep = "\n")
-    pars <- list(source, demographic_variant, gender, data_type)
+    pars <- list(dsource, demographic_variant, gender, data_type)
     nrow(DBI::dbGetQuery(con, sql, pars)) > 0L
   }
 
   for (i in seq_along(sheet_names)) {
-    if (is_done(source, variant_names[[i]], gender, data_type)) {
+    if (is_done(dsource, variant_names[[i]], gender, data_type)) {
       message(sprintf("skipping %s / %s / %s / %s",
-                      source, variant_names[[i]], gender, data_type))
+                      dsource, variant_names[[i]], gender, data_type))
     } else {
-      xl <- report_time(read_sheet(sheet_names[[i]]), "read")
+      
       if (data_type == 'int_pop') {
+        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
           process_interpolated_population_sheet(xl, variant_names[[i]],
                                                 data_type, remove_year[[i]]), "process")
+        
       } else if (data_type == 'tot_pop') {
+        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
           process_total_population_sheet(xl, variant_names[[i]], data_type, remove_year[[i]]),
           "process")
         
       } else if (data_type == 'birth_mf') {
+        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
           process_birth_gender_sheet(xl, variant_names[[i]], data_type),
           "process")
       
       } else if (data_type == 'as_fert') {
+        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
           process_age_specific_fertility_sheet(xl, variant_names[[i]], data_type),
+          "process")
+        
+      } else if (data_type == 'cm_2015') {
+        xl <- report_time(read_sheet_cm(sheet_names[[i]]), "read")
+        d <- report_time(
+          process_child_mortality(xl, dsource),
           "process")
 
       } else {

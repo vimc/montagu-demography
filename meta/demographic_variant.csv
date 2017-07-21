@@ -9,3 +9,6 @@
 "unwpp_zero_migration","UNWPP Zero Migration"
 "unwpp_constant_mortality","UNWPP Constant Mortality"
 "unwpp_no_change","UNWPP No Change"
+"cm_median","Child Mortality (IGME) Median"
+"cm_lower","Child Mortality (IGME) Lower"
+"cm_upper","Child Mortality (IGME) Upper"
