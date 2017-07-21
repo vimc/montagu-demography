@@ -15,9 +15,9 @@ The script requires that the following tables exist according to the latest sche
 
 * `demographic_statistic_type`
 * `gender`
-* `projection_variant`
-* `source`
-* `country` - and the script further requires this table to be populated already.
+* `demographic_variant`
+* `demographic_source`
+* `country`
 
 Two environment variables set the behaviour:-
 
@@ -42,13 +42,11 @@ MONTAGU_DB_PORT=8888
 * Loads the list of 97 relevant countries from `meta/countries_keep.txt`
 * Creates a `data/` directory, and downloads UNWPP data from `mrcdata.dide.ic.ac.uk`. (See data below)
 * (note that files are only downloaded if the destination doesn't exist)
-* Populate `demographic_statistic_type`, `gender`, `projection_variant` and `source` with the constants.
-* Populate `country` with `montagu-db` country information
+* Populate `demographic_statistic_type`, `gender`, `demographic_variant` and `demographic_source` with the constants. (See meta/ directory)
+* Populate `country` with `montagu-db` country information. (montagu-db/minimal/common/country.csv)
 * Populate `demographic_statistic` table with the demographic data.
 
 ### Development/Debugging
-
-Two extra functions may be useful for debugging.
 
 * `empty_tables(db)` empties the `demographic_statistic_type`, `gender`, `projection_variant`, `source`, and `demographic_statistic` tables.
 
@@ -59,13 +57,21 @@ Two extra functions may be useful for debugging.
 * Interpolated Population, WPP 2012 revision.
 * Interpolated Population, WPP 2015 revision.
 * Interpolated Population, WPP 2017 revision.
-* Total Population, WPP 2012 revision.
+
+* Total Population, WPP 2012 revision. 
 * Total Population, WPP 2015 revision.
-* Total Population, WPP 2017 revision.
+* Total Population, WPP 2017 revision. 
+
+* Birth Gender Ratio, WPP 2017 revision.
+* Age-specific Fertility, WPP 2017 revision.
+
+Note:
+
+(Population Data for Marshall Islands and Tuvalu are not currently available in age-distributed form. They are only available in Total Population, Both-Gender)
 
 ### Steps for adding new datasets (to be confirmed)
 
 * New spreadsheets should be put somewhere in `C:\xampp\htdocs\mrcdata\resources` on `fi--didex1.dide.ic.ac.uk` - these will be downloaded on demand
 * Add the new sheets to `meta/files.csv` arrange downloading
-* May need to add values in `meta/demographic_statistic_type.csv`, `meta/source.csv`, and/or `meta/projection_variant.csv`
-* Write the function to import the data. (see `process_interpolated_population`)
+* Edit `meta/demographic_statistic_type.csv`, `meta/demographic_source.csv`, `meta/demographic_variant.csv`, `meta/process.csv`
+* Write the function to import the data. (see the various `process` functions)
