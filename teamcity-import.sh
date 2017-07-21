@@ -44,9 +44,9 @@ if [ $SUCCESS -eq 0 ]; then
            pg_dump -U vimc \
              -t demographic_statistic \
              -t gender \
-             -t projection_variant \
+             -t demographic_variant \
              -t demographic_statistic_type \
-             -t source \
+             -t demographic_source \
              -Fc montagu \
              > demography.dump
     SUCCESS=$?
