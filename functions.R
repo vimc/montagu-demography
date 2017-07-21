@@ -3,6 +3,7 @@ import_demography <- function(con, clear_first = TRUE) {
   if (clear_first) {
     empty_tables(con)
   }
+  
   init_tables(con)
   process_all_population(con)
   DBI::dbExecute(con, "VACUUM")
@@ -13,7 +14,7 @@ import_demography <- function(con, clear_first = TRUE) {
 empty_tables <- function(con) {
   tables <- c("demographic_statistic",
               "touchstone_demographic_source",
-              "gender", "projection_variant", "source",
+              "gender", "demographic_variant", "demographic_source",
               "demographic_statistic_type")
   tables_str <- paste(tables, collapse = ", ")
   sql <- paste("TRUNCATE", tables_str)
@@ -26,11 +27,11 @@ table_is_empty <- function(con, tbl) {
 }
 
 # init_tables
-# Adds identifiers for the gender, projection, demographic_statistic_type
-# and source tables.
+# Adds identifiers for the gender, demographic_variant, demographic_statistic_type
+# and demographic_source tables.
 init_tables <- function(con) {
-  tables <- c("gender", "projection_variant", "demographic_statistic_type",
-              "source")
+  tables <- c("gender", "demographic_variant", "demographic_statistic_type",
+              "demographic_source")
   for (table in tables) {
     upload_csv(con, file.path("meta", paste0(table, ".csv")))
   }
@@ -107,7 +108,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
       age_from = rep(start_age, each=no_countries * no_years),
       age_to = rep(start_age+4, each=no_countries * no_years),
       stringsAsFactors = FALSE)
-    process_shared(res, gender, source, variant, data_type, year_span = 5)
+    process_shared(res, gender, source, variant, data_type)
   }
 
   process_birth_gender_sheet <- function(xl, variant, data_type) {
@@ -126,7 +127,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
       stringsAsFactors = FALSE)
     res$age_from <- 0
     res$age_to   <- 0
-    process_shared(res, gender, source, variant, data_type, year_span = 5)
+    process_shared(res, gender, source, variant, data_type)
   }
   
   process_interpolated_population_sheet <- function(xl, variant, data_type, remove_year) {
@@ -146,7 +147,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
     
     res <- rbind(reshape(xl[xl$year <  1990, ], age_cols_pre_1990),
                  reshape(xl[xl$year >= 1990, ], age_cols_from_1990))
-    process_shared(res, gender, source, variant, data_type, year_span = 1)
+    process_shared(res, gender, source, variant, data_type)
   }
   
   process_total_population_sheet <- function(xl, variant, data_type, remove_year) {
@@ -167,20 +168,15 @@ process_population <- function(con, xlfile, gender, sheet_names,
       stringsAsFactors = FALSE)
     res$age_from <- 0
     res$age_to   <- 120
-    process_shared(res, gender, source, variant, data_type, year_span = 1)
+    process_shared(res, gender, source, variant, data_type)
   }
 
-  ## This converts columns to the format we want them on montagu
-  ## (date_start, date_end) and sets the metadata columns
-  process_shared <- function(res, gender, source, variant, data_type, year_span) {
+  ## Common behaviour for all process functions
+  process_shared <- function(res, gender, source, variant, data_type) {
     row.names(res) <- NULL    
-    res$date_start <- sprintf("%d-07-01", res$year)
-    res$date_end <- sprintf("%d-06-30", res$year + year_span)
-    res$year <- NULL
-
-    res$projection_variant <- variant
+    res$demographic_variant <- variant
     res$gender <- gender
-    res$source <- source
+    res$demographic_source <- source
     res$demographic_statistic_type <- data_type
     res
   }
@@ -188,7 +184,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
   upload_data <- function(d) {
     ## TODO: this can be done a bit more efficiently, but this is OK for now
     ## Manually satisfy FK constraints:
-    fks <- c("gender", "source", "projection_variant",
+    fks <- c("gender", "demographic_source", "demographic_variant",
              "demographic_statistic_type")
     meta <- setNames(lapply(fks, function(x) DBI::dbReadTable(con, x)), fks)
     for (fk in names(meta)) {
@@ -213,26 +209,26 @@ process_population <- function(con, xlfile, gender, sheet_names,
     on.exit()
   }
 
-  is_done <- function(source, projection_variant, gender, data_type) {
+  is_done <- function(source, demographic_variant, gender, data_type) {
     sql <- paste("SELECT *",
                  "  FROM demographic_statistic",
-                 "  JOIN source",
-                 "    ON source.id = demographic_statistic.source",
-                 "  JOIN projection_variant",
-                 "    ON projection_variant.id =",
-                 "       demographic_statistic.projection_variant",
+                 "  JOIN demographic_source",
+                 "    ON demographic_source.id = demographic_statistic.demographic_source",
+                 "  JOIN demographic_variant",
+                 "    ON demographic_variant.id =",
+                 "       demographic_statistic.demographic_variant",
                  "  JOIN gender",
                  "    ON gender.id = demographic_statistic.gender",
                  "  JOIN demographic_statistic_type",
                  "    ON demographic_statistic_type.id =",
                  "       demographic_statistic.demographic_statistic_type",
-                 " WHERE source.code = $1",
-                 "   AND projection_variant.code = $2",
+                 " WHERE demographic_source.code = $1",
+                 "   AND demographic_variant.code = $2",
                  "   AND gender.code = $3",
                  "   AND demographic_statistic_type.code = $4",
                  " LIMIT 1",
                  sep = "\n")
-    pars <- list(source, projection_variant, gender, data_type)
+    pars <- list(source, demographic_variant, gender, data_type)
     nrow(DBI::dbGetQuery(con, sql, pars)) > 0L
   }
 
