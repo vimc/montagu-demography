@@ -137,7 +137,39 @@ process_population <- function(con, xlfile, gender, sheet_names,
     res
   }
   
-  
+  process_age_specific_mortality_sheet <- function(xl, variant, data_type) {
+    
+    # Replace eg. "95+" with "95-120"
+    
+    last_age_index <- grep("[+]", names(xl))
+
+    if (length(last_age_index) == 1) {
+      new_colname <- gsub("\\+", "-120", names(xl)[last_age_index])
+      names(xl)[last_age_index]<-new_colname
+    }
+    
+    age_indexes <- c(as.numeric(grep(RE_AGE_SPAN, names(xl))))
+    age_cols <- names(xl)[age_indexes]
+    
+    if (age_indexes[[1L]] != 7L) {
+      stop("Unexpected data format!")
+    }
+    
+    # Seperate ages into {age_from} - {age_to}
+    
+    age_from <- unlist(lapply(strsplit(age_cols,"-"), `[[`, 1))
+    age_to <- unlist(lapply(strsplit(age_cols,"-"), `[[`, 2))
+    
+    res<- data.frame(
+      year = as.numeric(substring(unique(xl$"Period"),1,4)),
+      age_from = rep(age_from, each = nrow(xl)),
+      age_to = rep(age_to, each = nrow(xl)),
+      value = unlist(xl[age_cols])*1000,
+      country = xl$iso3,
+      stringsAsFactors = FALSE
+    )
+    process_shared(res, gender, dsource, variant, data_type)
+  }
   
   process_age_specific_fertility_sheet <- function(xl, variant, data_type) {
     #Column 6 Title Period (yyyy-yyyy)
@@ -321,6 +353,13 @@ process_population <- function(con, xlfile, gender, sheet_names,
           process_age_specific_fertility_sheet(xl, variant_names[[i]], data_type),
           "process")
         
+      } else if (data_type == 'mort_age') {
+        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        d <- report_time(
+          process_age_specific_mortality_sheet(xl, variant_names[[i]], data_type),
+          "process")
+        
+        
       } else if (data_type == 'cm_2015') {
         xl <- report_time(read_sheet_cm(sheet_names[[i]]), "read")
         d <- report_time(
@@ -395,4 +434,5 @@ filter_iso_countries <- function(ret) {
 
 RE_YEAR <- "^[0-9]{4}$"
 RE_YEAR_SPAN <- "^[0-9]{4}-[0-9]{4}$"
-RE_AGE_SPAN <- "^[0-9]{2}-[0-9]{2}$"
+RE_AGE_SPAN <- "^[0-9]{1,2}-[0-9]{1,3}$"
+

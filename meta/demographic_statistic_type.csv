@@ -6,3 +6,4 @@
 "cm_u5mr","Under 5 years","Under 5 mortality rate per 1000 live births","1","2000-07-01"
 "cm_imr","Under 1 years","Under 1 mortality rate per 1000 live births","1","2000-07-01"
 "cm_nmr","1 years","Neonatal (28 day) mortality rate per 1000 live births","1","2000-07-01"
+"mort_age","5 years","Number of deaths by age","5","2000-07-01"

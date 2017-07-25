@@ -1,4 +1,7 @@
 "filename","gender","sheet_names","variant_names","source","data_type","remove_year"
+"data/wpp2017/wpp2017_mort_f04_1_deaths_by_age_both_sexes.xlsx","both","ESTIMATES;MEDIUM VARIANT;HIGH VARIANT;LOW VARIANT","unwpp_estimates;unwpp_medium_variant;unwpp_high_variant;unwpp_low_variant","unwpp_2017","mort_age","0;0;0;0"
+"data/wpp2017/wpp2017_mort_f04_2_deaths_by_age_male.xlsx","male","ESTIMATES;MEDIUM VARIANT;HIGH VARIANT;LOW VARIANT","unwpp_estimates;unwpp_medium_variant;unwpp_high_variant;unwpp_low_variant","unwpp_2017","mort_age","0;0;0;0"
+"data/wpp2017/wpp2017_mort_f04_3_deaths_by_age_female.xlsx","female","ESTIMATES;MEDIUM VARIANT;HIGH VARIANT;LOW VARIANT","unwpp_estimates;unwpp_medium_variant;unwpp_high_variant;unwpp_low_variant","unwpp_2017","mort_age","0;0;0;0"
 "data/cm2015/ratesdeaths_allindicators.xlsx","both","Rates and Deaths","cm_2015","cm_2015","cm_2015","0"
 "data/wpp2017/wpp2017_fert_f02_sex_ratio_at_birth.xlsx","both","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2017","birth_mf","0;0"
 "data/wpp2017/wpp2017_fert_f07_age_specific_fertility.xlsx","female","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2017","as_fert","0;0"

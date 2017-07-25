@@ -54,19 +54,20 @@ MONTAGU_DB_PORT=8888
 
 ### Current datasets
 
-|Source      | Data                        | Units               | Years [Step]  | Ages [Step]        | Gender |
-|------------|-----------------------------|---------------------|---------------|--------------------|--------|
-| WPP_2012   | Interpolated Population     | People              | 1950-2100 [1] | 0-80+/100+ [1]     | M/F/B  |
-| WPP_2015   | Interpolated Population     | People              | 1950-2100 [1] | 0-80+/100+ [1]     | M/F/B  |
-| WPP_2017   | Interpolated Population     | People              | 1950-2100 [1] | 0-80+/100+ [1]     | M/F/B  |
-| WPP_2012   | Total Population            | People              | 1950-2100 [1] |         -          | M/F/B  |
-| WPP_2015   | Total Population            | People              | 1950-2100 [1] |         -          | M/F/B  |
-| WPP_2017   | Total Population            | People              | 1950-2100 [1] |         -          | M/F/B  |
-| WPP_2017   | Sex Ratio At Birth          | m. per f. births    | 1950-2100 [5] |         -          |   B    |
-| WPP_2017   | Age-specific fertility      | Births              | 1950-2100 [5] | (mother) 15-49 [5] |   F    |
-| CM_2015    | U5MR rtality rate           | deaths / live birth |~1950-2015 [1] |         -          |   B    |
-| CM_2015    | IMR Infant mortality rate   | deaths / live birth |~1950-2015 [1] |         -          |   B    |
-| CM_2015    | NMR Neonatal mortality rate | deaths / live birth |~1950-2015 [1] |         -          |   B    |
+|Source      | Data                              | Units               | Years [Step]  | Ages [Step]        | Gender |
+|------------|-----------------------------------|---------------------|---------------|--------------------|--------|
+| WPP_2012   | Interpolated Population           | people              | 1950-2100 [1] | 0-80+/100+ [1]     | M/F/B  |
+| WPP_2015   | Interpolated Population           | people              | 1950-2100 [1] | 0-80+/100+ [1]     | M/F/B  |
+| WPP_2017   | Interpolated Population           | people              | 1950-2100 [1] | 0-80+/100+ [1]     | M/F/B  |
+| WPP_2012   | Total Population                  | people              | 1950-2100 [1] |         -          | M/F/B  |
+| WPP_2015   | Total Population                  | people              | 1950-2100 [1] |         -          | M/F/B  |
+| WPP_2017   | Total Population                  | people              | 1950-2100 [1] |         -          | M/F/B  |
+| WPP_2017   | Sex Ratio At Birth                | m. per f. births    | 1950-2100 [5] |         -          |   B    |
+| WPP_2017   | Age-specific fertility            | births              | 1950-2100 [5] | (mother) 15-49 [5] |   F    |
+| WPP_2017   | Mortality (n.deaths) by age       | deaths              | 1950-2100 [5] | 0-94 [5], 95+      | M/F/B  |
+| CM_2015    | U5MR <5 Mortality rate            | deaths / live birth |~1950-2015 [1] |         -          |   B    |
+| CM_2015    | IMR <1 mortality rate             | deaths / live birth |~1950-2015 [1] |         -          |   B    |
+| CM_2015    | NMR Neonatal (28d) mortality rate | deaths / live birth |~1950-2015 [1] |         -          |   B    |
 
 Note 1: Demographic statistics are given in units of people, rather than 1000s. 
 
