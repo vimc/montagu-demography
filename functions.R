@@ -137,6 +137,45 @@ process_population <- function(con, xlfile, gender, sheet_names,
     res
   }
   
+  process_annual_indicators <- function(xl, variant, col_names, genders, var_names, transforms, dsource, remove_year) {
+    
+    # Rename absurd date column.
+    
+    names(xl)[match("Reference date (1 January - 31 December)",names(xl))]<-"year"
+    
+    # Remove unwanted columns
+    
+    cols_wanted <- c("year","iso3",col_names)
+    xl<-xl[match(cols_wanted,names(xl))]
+    data_cols <- match(col_names,names(xl))
+    
+    # Remove unwanted years
+    
+    if (as.numeric(remove_year) > 0) {
+      xl<-xl[!(xl$year %in% remove_year), ]
+    }
+    
+    # Apply data transforms (1000s to units)
+    
+    xl[data_cols]<-mapply(`*`,xl[data_cols],transforms)
+
+    res<- data.frame(
+      year = as.numeric(xl$year),
+      gender = rep(genders,each=nrow(xl)),
+      demographic_variant = variant,
+      demographic_source = dsource,
+      demographic_statistic_type = rep(var_names, each=nrow(xl)),
+      age_from = 0,
+      age_to = 0,
+      country = xl$iso3,
+      value = unlist(xl[data_cols]),
+      stringsAsFactors = FALSE
+    )
+    row.names(res) <- NULL
+    res
+  }
+  
+  
   process_age_specific_mortality_sheet <- function(xl, variant, data_type) {
     
     # Replace eg. "95+" with "95-120"
@@ -365,6 +404,29 @@ process_population <- function(con, xlfile, gender, sheet_names,
         d <- report_time(
           process_child_mortality(xl, dsource),
           "process")
+
+      } else if (data_type == 'ann_int_ind') {
+        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        col_names = c("Deaths (thousands)",
+                      "Male deaths (thousands)",
+                      "Female deaths (thousands)",
+                      "Crude death rate (deaths per 1,000 population)",
+                      "Life expectancy at birth, both sexes combined (years)",
+                      "Life expectancy at birth, males (years)",
+                      "Life expectancy at birth, females (years)",
+                      "Births (thousands)",
+                      "Crude birth rate (births per 1,000 population)",
+                      "Total fertility (live births per woman)")
+        
+        transforms = c(1000,1000,1000,0.001,1,1,1,1000,0.001,1)
+                      
+        genders <- c("both","male","female","both","both","male","female","both","both","both")
+        var_names <- c("mort_age","mort_age","mort_age","cdr","lx0","lx0","lx0","births","cbr","fert_tot")
+        
+        d<- report_time(process_annual_indicators(xl,variant_names[[i]],col_names, genders, 
+                                                  var_names, transforms, dsource, remove_year[[i]]),
+                        "process")
+        
 
       } else {
         stop(sprintf("data type %s not recognised", data_type))

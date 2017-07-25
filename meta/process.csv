@@ -1,4 +1,5 @@
 "filename","gender","sheet_names","variant_names","source","data_type","remove_year"
+"data/wpp2017/wpp2017_int_f01_annual_demographic_indicators.xlsx","ignore","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2017","ann_int_ind","0;2015"
 "data/wpp2017/wpp2017_mort_f04_1_deaths_by_age_both_sexes.xlsx","both","ESTIMATES;MEDIUM VARIANT;HIGH VARIANT;LOW VARIANT","unwpp_estimates;unwpp_medium_variant;unwpp_high_variant;unwpp_low_variant","unwpp_2017","mort_age","0;0;0;0"
 "data/wpp2017/wpp2017_mort_f04_2_deaths_by_age_male.xlsx","male","ESTIMATES;MEDIUM VARIANT;HIGH VARIANT;LOW VARIANT","unwpp_estimates;unwpp_medium_variant;unwpp_high_variant;unwpp_low_variant","unwpp_2017","mort_age","0;0;0;0"
 "data/wpp2017/wpp2017_mort_f04_3_deaths_by_age_female.xlsx","female","ESTIMATES;MEDIUM VARIANT;HIGH VARIANT;LOW VARIANT","unwpp_estimates;unwpp_medium_variant;unwpp_high_variant;unwpp_low_variant","unwpp_2017","mort_age","0;0;0;0"
