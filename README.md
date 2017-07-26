@@ -67,11 +67,13 @@ MONTAGU_DB_PORT=8888
 | WPP_2017   | Mortality (n.deaths) by age  | deaths            | 1950-2100 [5] | 0-94 [5], 95+    | M/F/B  |
 | WPP_2017   | Total Mortality              | deaths            | 1950-2100 [1] |         -        | M/F/B  |
 | WPP_2017   | Crude death rate (CDR)       | deaths/population | 1950-2100 [1] |         -        |   B    |
-| WPP_2017   | Crude death rate (CDR)       | deaths/population | 1950-2100 [1] |         -        |   B    |
 | WPP_2017   | Life expectancy @ age 0      | years             | 1950-2100 [1] |         -        | M/F/B  |
 | WPP_2017   | Total births                 | births            | 1950-2100 [1] |         -        |   B    |
 | WPP_2017   | Crude birth rate (CBR)       | births/population | 1950-2100 [1] |         -        |   B    |
 | WPP_2017   | Total fertility              | avg births/mother | 1950-2100 [1] |         -        |   B    |
+| WPP_2017   | p(dying at age x)            | probability       | 1950-2100 [5] | 0,1-4,5-9..85-100| M/F/B  |
+| WPP_2017   | Survivors of 100,000 at age x| people            | 1950-2100 [5] | 0,1-4,5-9..85-100| M/F/B  |
+| WPP_2017   | Expected years left at age x | years             | 1950-2100 [5] | 0,1-4,5-9..85-100| M/F/B  |
 | CM_2015    | U5MR <5 Mortality rate       | deaths/live birth |~1950-2015 [1] |         -        |   B    |
 | CM_2015    | IMR <1 mortality rate        | deaths/live birth |~1950-2015 [1] |         -        |   B    |
 | CM_2015    | NMR Neo (28d) mortality rate | deaths/live birth |~1950-2015 [1] |         -        |   B    |

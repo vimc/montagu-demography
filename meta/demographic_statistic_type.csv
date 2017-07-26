@@ -13,3 +13,6 @@
 "births","N/A","Number of births","1","2000-01-01"
 "cbr","N/A","Crude birth rate","1","2000-01-01"
 "fert_tot","N/A","Total births per woman","1","2000-01-01"
+"p_dying","Age (years)","Probability of dying in a given age range","5","2000-07-01"
+"n_survivors","Age (years)","Number of survivors from a birth-cohort of 100,000","5","2000-07-01"
+"life_ex","Age (years)","Expected remaining years of life","5","2000-07-01"

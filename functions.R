@@ -137,6 +137,41 @@ process_population <- function(con, xlfile, gender, sheet_names,
     res
   }
   
+  process_life_table <- function(xl, variant, gender, col_names, var_names, dsource) {
+    # Remove unwanted columns
+    
+    cols_wanted <- c("Period","iso3", "Age (x)", "Age interval (n)", col_names)
+    xl<-xl[match(cols_wanted, names(xl))]
+    data_cols <- match(col_names, names(xl))
+    
+    age_from<-as.numeric(xl$"Age (x)")
+    age_int<-as.numeric(xl$"Age interval (n)")
+    age_to<-age_from+(age_int-1)
+                  
+
+    res<- data.frame(
+      year = as.numeric(substring(unique(xl$"Period"),1,4)),
+      gender = gender,
+      demographic_variant = variant,
+      demographic_source = dsource,
+      demographic_statistic_type = rep(var_names, each=nrow(xl)),
+      age_from = age_from,
+      age_to = age_to,
+      country = xl$iso3,
+      value = unlist(xl[data_cols]),
+      stringsAsFactors = FALSE
+    )
+    row.names(res) <- NULL
+    
+    # An issue with the "..." single character these files contain for missing data...
+    # Can't seem to make R compare to it, to remove those entries. Here is a hacked
+    # workaround...
+    
+    res<-res[ suppressWarnings( !is.na( as.numeric(res$value))) , ]
+    
+    res
+  }
+
   process_annual_indicators <- function(xl, variant, col_names, genders, var_names, transforms, dsource, remove_year) {
     
     # Rename absurd date column.
@@ -146,8 +181,8 @@ process_population <- function(con, xlfile, gender, sheet_names,
     # Remove unwanted columns
     
     cols_wanted <- c("year","iso3",col_names)
-    xl<-xl[match(cols_wanted,names(xl))]
-    data_cols <- match(col_names,names(xl))
+    xl<-xl[match(cols_wanted, names(xl))]
+    data_cols <- match(col_names, names(xl))
     
     # Remove unwanted years
     
@@ -161,7 +196,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
 
     res<- data.frame(
       year = as.numeric(xl$year),
-      gender = rep(genders,each=nrow(xl)),
+      gender = rep(genders, each = nrow(xl)),
       demographic_variant = variant,
       demographic_source = dsource,
       demographic_statistic_type = rep(var_names, each=nrow(xl)),
@@ -184,7 +219,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
 
     if (length(last_age_index) == 1) {
       new_colname <- gsub("\\+", "-120", names(xl)[last_age_index])
-      names(xl)[last_age_index]<-new_colname
+      names(xl)[last_age_index] <- new_colname
     }
     
     age_indexes <- c(as.numeric(grep(RE_AGE_SPAN, names(xl))))
@@ -196,11 +231,11 @@ process_population <- function(con, xlfile, gender, sheet_names,
     
     # Seperate ages into {age_from} - {age_to}
     
-    age_from <- unlist(lapply(strsplit(age_cols,"-"), `[[`, 1))
-    age_to <- unlist(lapply(strsplit(age_cols,"-"), `[[`, 2))
+    age_from <- unlist( lapply( strsplit( age_cols,"-"), `[[`, 1))
+    age_to <- unlist( lapply( strsplit( age_cols,"-"), `[[`, 2))
     
     res<- data.frame(
-      year = as.numeric(substring(unique(xl$"Period"),1,4)),
+      year = as.numeric( substring( unique( xl$"Period"), 1, 4)),
       age_from = rep(age_from, each = nrow(xl)),
       age_to = rep(age_to, each = nrow(xl)),
       value = unlist(xl[age_cols])*1000,
@@ -404,9 +439,26 @@ process_population <- function(con, xlfile, gender, sheet_names,
         d <- report_time(
           process_child_mortality(xl, dsource),
           "process")
+        
+      } else if (data_type == 'life_table') {
+        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        
+        col_names = c("Probability of dying q(x,n)",
+                      "Number of survivors l(x)",
+                      "Expectation of life e(x)")
+        
+        var_names <- c("p_dying","n_survivors","life_ex")
+        
+        d<- report_time(process_life_table(xl, variant_names[[i]], gender, col_names, 
+                                                  var_names, dsource),
+                        "process")
+        
+      
 
       } else if (data_type == 'ann_int_ind') {
+        
         xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        
         col_names = c("Deaths (thousands)",
                       "Male deaths (thousands)",
                       "Female deaths (thousands)",
@@ -421,6 +473,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
         transforms = c(1000,1000,1000,0.001,1,1,1,1000,0.001,1)
                       
         genders <- c("both","male","female","both","both","male","female","both","both","both")
+        
         var_names <- c("mort_age","mort_age","mort_age","cdr","lx0","lx0","lx0","births","cbr","fert_tot")
         
         d<- report_time(process_annual_indicators(xl,variant_names[[i]],col_names, genders, 
