@@ -1,4 +1,5 @@
 "filename","gender","sheet_names","variant_names","source","data_type","remove_year"
+"data/wpp2017/wpp2017_migr_f01_net_migration_rate.xlsx","both","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2017","net_mig_rate","0;0"
 "data/wpp2017/wpp2017_mort_f17_1_abridged_life_table_both_sexes.xlsx","both","ESTIMATES;MEDIUM 2015-2050;MEDIUM 2050-2100","unwpp_estimates;unwpp_medium_variant;unwpp_medium_variant","unwpp_2017","life_table","0;0;0"
 "data/wpp2017/wpp2017_mort_f17_2_abridged_life_table_male.xlsx","male","ESTIMATES;MEDIUM 2015-2050;MEDIUM 2050-2100","unwpp_estimates;unwpp_medium_variant;unwpp_medium_variant","unwpp_2017","life_table","0;0;0"
 "data/wpp2017/wpp2017_mort_f17_3_abridged_life_table_female.xlsx","female","ESTIMATES;MEDIUM 2015-2050;MEDIUM 2050-2100","unwpp_estimates;unwpp_medium_variant;unwpp_medium_variant","unwpp_2017","life_table","0;0;0"

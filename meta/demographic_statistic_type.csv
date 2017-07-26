@@ -16,3 +16,4 @@
 "p_dying","Age (years)","Probability of dying in a given age range","5","2000-07-01"
 "n_survivors","Age (years)","Number of survivors from a birth-cohort of 100,000","5","2000-07-01"
 "life_ex","Age (years)","Expected remaining years of life","5","2000-07-01"
+"net_mig_rate","N/A","Net Migration Rate","5","2000-07-01"

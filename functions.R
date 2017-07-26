@@ -272,7 +272,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
     process_shared(res, gender, dsource, variant, data_type)
   }
 
-  process_birth_gender_sheet <- function(xl, variant, data_type) {
+  process_5yearly_single_sheet <- function(xl, variant, data_type, mult_value) {
     year_indexes <- as.numeric(grep(RE_YEAR_SPAN, names(xl)))
     if (year_indexes[[1L]] != 6L) {
       stop("Unexpected data format!")
@@ -280,6 +280,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
     
     year_cols <- names(xl)[year_indexes]
     start_years <- as.integer(substr(year_cols,1,4))
+    
     
     res <- data.frame(
       year = rep(start_years, each = length(unique(xl$iso3))),
@@ -289,6 +290,8 @@ process_population <- function(con, xlfile, gender, sheet_names,
     
     res$age_from <- 0
     res$age_to   <- 0
+    res$value    <- res$value * mult_value
+    
     process_shared(res, gender, dsource, variant, data_type)
   }
   
@@ -418,9 +421,16 @@ process_population <- function(con, xlfile, gender, sheet_names,
       } else if (data_type == 'birth_mf') {
         xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
-          process_birth_gender_sheet(xl, variant_names[[i]], data_type),
+          process_5yearly_single_sheet(xl, variant_names[[i]], data_type, 1),
           "process")
       
+      } else if (data_type == 'net_mig_rate') {
+        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        d <- report_time(
+          process_5yearly_single_sheet(xl, variant_names[[i]], data_type, 0.001),
+          "process")
+        
+            
       } else if (data_type == 'as_fert') {
         xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
