@@ -297,8 +297,10 @@ process_population <- function(con, xlfile, gender, sheet_names,
   
   process_interpolated_population_sheet <- function(xl, variant, data_type, remove_year) {
     age_cols_pre_1990 <- as.character(c(0:79, "80+"))
-    # Column "100+" has been renamed to "100" in UNWPP 2017.
-    if ("100+" %in% colnames(xl)) {
+   
+     # Column "100+" has been renamed to "100" in UNWPP 2017 interpolated data.
+   
+     if ("100+" %in% colnames(xl)) {
       age_cols_from_1990 <- as.character(c(0:99, "100+"))
     } else {
       age_cols_from_1990 <- as.character(c(0:100))
@@ -309,6 +311,41 @@ process_population <- function(con, xlfile, gender, sheet_names,
       xl<-xl[!(xl$year %in% remove_year), ]
     }
     
+    
+    res <- rbind(reshape(xl[xl$year <  1990, ], age_cols_pre_1990),
+                 reshape(xl[xl$year >= 1990, ], age_cols_from_1990))
+    
+    res$value <- res$value * 1000
+    process_shared(res, gender, dsource, variant, data_type)
+  }
+  
+  process_qq_population_sheet <- function(xl, variant, data_type, remove_year) {
+    
+    # 5-yearly time and age data, but multi-variant.
+    #
+    # ESTIMATES page has years 1950..2015 step 5.
+    #   For years up to 1985, ages 0..4 until 75..79 and 80+
+    #   For years from 1990, age 0..4 until 95.99 and 100+
+    #
+    # ALL OTHER VARIANT PAGES: years 2015..2100 step 5. (Note dup 2015)
+    #   Years 0..4 until 95..99 and 100+ - and "80+" column is absent.
+    
+    # Rename year column, and remove duplicate year rows:
+    
+    names(xl)[match("Reference date (as of 1 July)",names(xl))]<-"year"
+    if (as.numeric(remove_year)>0){
+      xl<-xl[!(xl$year %in% remove_year), ]
+    }
+    
+    # Expected age columns:-
+    
+    age_start_pre_1990 <- seq(0,75,5)
+    age_end_pre_1990 <- seq(4,79,5)
+    age_cols_pre_1990 <- c(paste(age_start_pre_1990,age_end_pre_1990,sep="-"),"80+")
+    
+    age_start_from_1990 <- seq(0,95,5)
+    age_end_from_1990 <- seq(4,99,5)
+    age_cols_from_1990 <- c(paste(age_start_pre_1990,age_end_pre_1990,sep="-"),"100+")
     
     res <- rbind(reshape(xl[xl$year <  1990, ], age_cols_pre_1990),
                  reshape(xl[xl$year >= 1990, ], age_cols_from_1990))
@@ -411,7 +448,12 @@ process_population <- function(con, xlfile, gender, sheet_names,
         d <- report_time(
           process_interpolated_population_sheet(xl, variant_names[[i]],
                                                 data_type, remove_year[[i]]), "process")
-        
+      } else if (data_type == 'qq_pop') {
+        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        d <- report_time(
+          process_qq_population_sheet(xl, variant_names[[i]],
+                                                data_type, remove_year[[i]]), "process")
+      
       } else if (data_type == 'tot_pop') {
         xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(

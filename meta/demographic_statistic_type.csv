@@ -1,5 +1,6 @@
 "code","age_interpretation","name","year_step_size","reference_date"
 "int_pop","Age (years)","Interpolated Population","1","2000-07-01"
+"qq_pop","Age (years)","Quinquennial Population","5","2000-07-01"
 "tot_pop","Age (years)","Total Population","1","2000-07-01"
 "birth_mf","N/A","Sex Ratio at Birth","5","2000-07-01"
 "as_fert","Age of mother (years)","Age-specific fertility","5","2000-07-01"
