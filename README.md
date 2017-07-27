@@ -52,41 +52,55 @@ MONTAGU_DB_PORT=8888
 
 ## Data Supported
 
-### Current datasets
+### From UNWPP 2012:
 
-|Source      | Data                         | Units             | Years [Step]  | Ages [Step]      | Gender | Variants |
-|------------|------------------------------|-------------------|---------------|------------------|--------|----------|
-| WPP_2012   | Interpolated Population      | people            | 1950-2100 [1] | 0-80+/100+ [1]   | M/F/B  | Est+M    |
-| WPP_2012   | Total Population             | people            | 1950-2100 [1] |         -        | M/F/B  | Est+M    |
-|            |                              |                   |               |                  |        |          |
-| WPP_2015   | Interpolated Population      | people            | 1950-2100 [1] | 0-80+/100+ [1]   | M/F/B  | Est+M    |
-| WPP_2015   | Total Population             | people            | 1950-2100 [1] |         -        | M/F/B  | Est+M    |
-|            |                              |                   |               |                  |        |          |
-| WPP_2017   | Interpolated Population      | people            | 1950-2100 [1] | 0-80+/100+ [1]   | M/F/B  | Est+M    |
-| WPP_2017   | Total Population             | people            | 1950-2100 [1] |         -        | M/F/B  | Est+M    |
-| WPP_2017   | Quinquennial Population      | people            | 1950-2100 [5] | 0-80+/100+ [5]   | M/F/B  | Est+MHL  |
-| WPP_2017   | Sex Ratio At Birth           | m. per f. births  | 1950-2100 [5] |         -        |   B    | Est+M    |
-| WPP_2017   | Age-specific fertility       | births            | 1950-2100 [5] | (moth) 15-49 [5] |   F    | Est+M    |
-| WPP_2017   | Mortality (n.deaths) by age  | deaths            | 1950-2100 [5] | 0-94 [5], 95+    | M/F/B  | Est+MHL  |
-| WPP_2017   | Total Mortality              | deaths            | 1950-2100 [1] |         -        | M/F/B  | Est+M    |
-| WPP_2017   | Crude death rate (CDR)       | deaths/population | 1950-2100 [1] |         -        |   B    | Est+M    |
-| WPP_2017   | Life expectancy @ age 0      | years             | 1950-2100 [1] |         -        | M/F/B  | Est+M    |
-| WPP_2017   | Total births                 | births            | 1950-2100 [1] |         -        |   B    | Est+M    |
-| WPP_2017   | Crude birth rate (CBR)       | births/population | 1950-2100 [1] |         -        |   B    | Est+M    |
-| WPP_2017   | Total fertility              | avg births/mother | 1950-2100 [1] |         -        |   B    | Est+M    |
-| WPP_2017   | p(dying at age x)            | probability       | 1950-2100 [5] | 0,1-4,5-9..85-100| M/F/B  | Est+M    |
-| WPP_2017   | Survivors of 100,000 at age x| people            | 1950-2100 [5] | 0,1-4,5-9..85-100| M/F/B  | Est+M    |
-| WPP_2017   | Expected years left at age x | years             | 1950-2100 [5] | 0,1-4,5-9..85-100| M/F/B  | Est+M    |
-| WPP_2017   | Net migration rate           | change per person | 1950-2100 [5] |         -        |   B    | Est+M    |
-|            |                              |                   |               |                  |        |          |
-| CM_2015    | U5MR <5 Mortality rate       | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
-| CM_2015    | IMR <1 mortality rate        | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
-| CM_2015    | NMR Neo (28d) mortality rate | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
+| Data                         | Units             | Years [Step]  | Ages [Step]      | Gender | Variants |
+|------------------------------|-------------------|---------------|------------------|--------|----------|
+| Interpolated Population      | people            | 1950-2100 [1] | 0-80+/100+ [1]   | M/F/B  | Est+M    |
+| Total Population             | people            | 1950-2100 [1] |         -        | M/F/B  | Est+M    |
 
+### From UNWPP 2015:
 
-Note 1: Demographic statistics are given in units of people, rather than 1000s. 
+| Data                         | Units             | Years [Step]  | Ages [Step]      | Gender | Variants |
+|------------------------------|-------------------|---------------|------------------|--------|----------|
+| Interpolated Population      | people            | 1950-2100 [1] | 0-80+/100+ [1]   | M/F/B  | Est+M    |
+| Total Population             | people            | 1950-2100 [1] |         -        | M/F/B  | Est+M    |
 
-Note 2: Population Data for Marshall Islands and Tuvalu are not currently available in age-distributed form. They are only available in Total Population, Both-Gender.
+### From UNWPP 2017:
+
+| Data                         | Units             | Years [Step]  | Ages [Step]      | Gender | Variants |
+|------------------------------|-------------------|---------------|------------------|--------|----------|
+| Interpolated Population      | people            | 1950-2100 [1] | 0-80+/100+ [1]   | M/F/B  | Est+M    |
+| Total Population             | people            | 1950-2100 [1] |         -        | M/F/B  | Est+M    |
+| Quinquennial Population      | people            | 1950-2100 [5] | 0-80+/100+ [5]   | M/F/B  | Est+MHL  |
+| Quinquennial Births          | births            | 1950-2100 [5] |         -        |   F    | Est+MHL  |
+| Sex Ratio At Birth           | m. per f. births  | 1950-2100 [5] |         -        |   B    | Est+M    |
+| Total births                 | births            | 1950-2100 [1] |         -        |   B    | Est+M    |
+| Crude birth rate (CBR)       | births/population | 1950-2100 [1] |         -        |   B    | Est+M    |
+| Age-specific fertility       | births            | 1950-2100 [5] | (moth) 15-49 [5] |   F    | Est+M    |
+| Total fertility              | avg births/mother | 1950-2100 [1] |         -        |   B    | Est+M    |
+| Mortality (n.deaths) by age  | deaths            | 1950-2100 [5] | 0-94 [5], 95+    | M/F/B  | Est+MHL  |
+| Total Mortality              | deaths            | 1950-2100 [1] |         -        | M/F/B  | Est+M    |
+| Crude death rate (CDR)       | deaths/population | 1950-2100 [1] |         -        |   B    | Est+M    |
+| Life expectancy @ age 0      | years             | 1950-2100 [1] |         -        | M/F/B  | Est+M    |
+| p(dying at age x)            | probability       | 1950-2100 [5] | 0,1-4,5-9..85-100| M/F/B  | Est+M    |
+| Survivors of 100,000 at age x| people            | 1950-2100 [5] | 0,1-4,5-9..85-100| M/F/B  | Est+M    |
+| Expected years left at age x | years             | 1950-2100 [5] | 0,1-4,5-9..85-100| M/F/B  | Est+M    |
+| Net migration rate           | change per person | 1950-2100 [5] |         -        |   B    | Est+M    |
+
+### From childmortality.org 2015:
+
+| Data                         | Units             | Years [Step]  | Ages [Step]      | Gender | Variants |
+|------------------------------|-------------------|---------------|------------------|--------|----------|
+| U5MR <5 Mortality rate       | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
+| IMR <1 mortality rate        | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
+| NMR Neo (28d) mortality rate | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
+
+### Notes:
+
+1: Demographic statistics are given in units of people, rather than 1000s. 
+
+2: Population Data for Marshall Islands and Tuvalu are not currently available in age-distributed form. They are only available in Total Population, Both-Gender.
 Kosovo is not available at all - known issue.
 
 ### Steps for adding new datasets (to be confirmed)

@@ -438,10 +438,13 @@ process_population <- function(con, xlfile, gender, sheet_names,
   }
 
   for (i in seq_along(sheet_names)) {
-    if (is_done(dsource, variant_names[[i]], gender, data_type)) {
-      message(sprintf("skipping %s / %s / %s / %s",
-                      dsource, variant_names[[i]], gender, data_type))
-    } else {
+    # Issue: some medium variant data is spread across two sheets, so 
+    # the is_done call causes the second sheet to be ignored.
+    
+    #if (is_done(dsource, variant_names[[i]], gender, data_type)) {
+    #  message(sprintf("skipping %s / %s / %s / %s",
+    #                  dsource, variant_names[[i]], gender, data_type))
+    #} else {
       
       if (data_type == 'int_pop') {
         xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
@@ -463,13 +466,20 @@ process_population <- function(con, xlfile, gender, sheet_names,
       } else if (data_type == 'birth_mf') {
         xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
-          process_5yearly_single_sheet(xl, variant_names[[i]], data_type, 1),
+          process_5yearly_single_sheet(xl, variant_names[[i]], data_type, mult_value = 1),
           "process")
       
+      } else if (data_type == 'qq_births') {
+        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        d <- report_time(
+          process_5yearly_single_sheet(xl, variant_names[[i]], data_type, mult_value = 1000),
+          "process")
+        
+        
       } else if (data_type == 'net_mig_rate') {
         xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
-          process_5yearly_single_sheet(xl, variant_names[[i]], data_type, 0.001),
+          process_5yearly_single_sheet(xl, variant_names[[i]], data_type, mulit_value = 0.001),
           "process")
         
             
@@ -504,8 +514,6 @@ process_population <- function(con, xlfile, gender, sheet_names,
         d<- report_time(process_life_table(xl, variant_names[[i]], gender, col_names, 
                                                   var_names, dsource),
                         "process")
-        
-      
 
       } else if (data_type == 'ann_int_ind') {
         
@@ -537,7 +545,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
         stop(sprintf("data type %s not recognised", data_type))
       }
       report_time(upload_data(d), "upload")
-    }
+    #}
   }
 }
 
