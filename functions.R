@@ -479,7 +479,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
       } else if (data_type == 'net_mig_rate') {
         xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
-          process_5yearly_single_sheet(xl, variant_names[[i]], data_type, mulit_value = 0.001),
+          process_5yearly_single_sheet(xl, variant_names[[i]], data_type, mult_value = 0.001),
           "process")
         
             
