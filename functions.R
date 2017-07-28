@@ -1,11 +1,11 @@
-import_demography <- function(con, clear_first = TRUE) {
-  download_data()
+import_demography <- function(con, clear_first = TRUE, test_code = "") {
+  download_data(test_code)
   if (clear_first) {
     empty_tables(con)
   }
   
   init_tables(con)
-  process_all_population(con)
+  process_all_population(con, test_code = test_code)
   DBI::dbExecute(con, "VACUUM")
 }
 
@@ -45,8 +45,15 @@ download_single <- function(url, dest) {
   }
 }
 
-download_data <- function() {
-  files <- read.csv("meta/files.csv", stringsAsFactors = FALSE)
+download_data <- function(test_code = "") {
+  if (test_code=="") {
+    files <- read.csv("meta/files.csv", stringsAsFactors = FALSE)
+  } else if (test_code=="july28_test") {
+    files <- read.csv("meta/files_july28test.csv", stringsAsFactors = FALSE)
+  } else {
+    stop(sprintf("test_code %s not recognised", test_code))
+  }
+  
   for (p in unique(dirname(files$filename))) {
     dir.create(p, FALSE, TRUE)
   }
@@ -57,7 +64,7 @@ download_data <- function() {
 
 process_population <- function(con, xlfile, gender, sheet_names,
                                remove_year, variant_names, dsource, data_type,
-                               country_tr) {
+                               country_tr, test_code = "") {
 
   reshape <- function(x, cols) {
     age_to <- age_from <- seq_along(cols) - 1L
@@ -295,15 +302,26 @@ process_population <- function(con, xlfile, gender, sheet_names,
     process_shared(res, gender, dsource, variant, data_type)
   }
   
-  process_interpolated_population_sheet <- function(xl, variant, data_type, remove_year) {
-    age_cols_pre_1990 <- as.character(c(0:79, "80+"))
+  process_interpolated_population_sheet <- function(xl, variant, data_type, remove_year, test_code = "") {
+    
+    
+    if (test_code == "") {
+      age_cols_pre_1990 <- as.character(c(0:79, "80+"))
    
-     # Column "100+" has been renamed to "100" in UNWPP 2017 interpolated data.
+      # Column "100+" has been renamed to "100" in UNWPP 2017 interpolated data.
    
-     if ("100+" %in% colnames(xl)) {
-      age_cols_from_1990 <- as.character(c(0:99, "100+"))
+      if ("100+" %in% colnames(xl)) {
+        age_cols_from_1990 <- as.character(c(0:99, "100+"))
+      } else {
+        age_cols_from_1990 <- as.character(c(0:100))
+      }
+    
+    } else if (test_code == "july28_test") {
+      age_cols_pre_1990 <- c("0","1","10")
+      age_cols_from_1990 <- c("0","1","10")
+    
     } else {
-      age_cols_from_1990 <- as.character(c(0:100))
+      stop(sprintf("test_code %s not recognised", test_code))
     }
     
     xl$year <- xl[[6]]
@@ -311,11 +329,14 @@ process_population <- function(con, xlfile, gender, sheet_names,
       xl<-xl[!(xl$year %in% remove_year), ]
     }
     
-    
+
     res <- rbind(reshape(xl[xl$year <  1990, ], age_cols_pre_1990),
                  reshape(xl[xl$year >= 1990, ], age_cols_from_1990))
     
+    
+    
     res$value <- res$value * 1000
+    
     process_shared(res, gender, dsource, variant, data_type)
   }
   
@@ -450,7 +471,8 @@ process_population <- function(con, xlfile, gender, sheet_names,
         xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
           process_interpolated_population_sheet(xl, variant_names[[i]],
-                                                data_type, remove_year[[i]]), "process")
+                                                data_type, remove_year[[i]], test_code), "process")
+        
       } else if (data_type == 'qq_pop') {
         xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
         d <- report_time(
@@ -549,11 +571,18 @@ process_population <- function(con, xlfile, gender, sheet_names,
   }
 }
 
-process_all_population <- function(con) {
+process_all_population <- function(con, test_code = "") {
   country_tr <- read_iso_countries()
   country_tr <- filter_iso_countries(country_tr)
-
-  info <- read_csv("meta/process.csv")
+  
+  
+  
+  
+  if (test_code=="") {
+    info <- read_csv("meta/process.csv")
+  } else if (test_code=="july28_test") {
+    info <- read_csv("meta/process_july28test.csv")
+  }
 
   for (i in seq_len(nrow(info))) {
     x <- info[i, ]
@@ -561,8 +590,9 @@ process_all_population <- function(con) {
     variant_names <- strsplit(x$variant_names, ";\\s*")[[1]]
     remove_year <- strsplit(x$remove_year, ";\\s*")[[1]]
     process_population(con, x$filename, x$gender, sheet_names, remove_year, 
-                       variant_names, x$source, x$data_type, country_tr)
+                       variant_names, x$source, x$data_type, country_tr, test_code = test_code)
   }
+  
 }
 
 read_excel <- function(...) {

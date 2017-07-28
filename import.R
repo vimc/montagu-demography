@@ -1,4 +1,5 @@
 source("functions.R")
+
 host <- Sys.getenv("MONTAGU_DB_HOST", "support.montagu.dide.ic.ac.uk")
 port <- as.integer(Sys.getenv("MONTAGU_DB_PORT", 6543))
 con <- DBI::dbConnect(RPostgres::Postgres(),
@@ -7,4 +8,9 @@ con <- DBI::dbConnect(RPostgres::Postgres(),
                       port = port,
                       password = "changeme",
                       user = "vimc")
-import_demography(con)
+
+
+
+
+#import_demography(con, test_code = "july28_test")
+import_demography(con, test_code = "")

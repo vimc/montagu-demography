@@ -1,0 +1,7 @@
+"filename","gender","sheet_names","variant_names","source","data_type","remove_year"
+"data/wpp2012/wpp2012_int_f03_1_population_by_age_annual_both_sexes.xls","both","ESTIMATES;MEDIUM FERTILITY","unwpp_estimates;unwpp_medium_variant","unwpp_2012","int_pop","0;0"
+"data/wpp2015/wpp2015_int_f03_1_population_by_age_annual_both_sexes.xls","both","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2015","int_pop","0;2015"
+"data/wpp2017/wpp2017_int_f03_1_population_by_age_annual_both_sexes.xlsx","both","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2017","int_pop","0;2015"
+"data/wpp2012/wpp2012_pop_f01_1_total_population_both_sexes.xls","both","ESTIMATES;MEDIUM FERTILITY","unwpp_estimates;unwpp_medium_variant","unwpp_2012","tot_pop","0;2010"
+"data/wpp2015/wpp2015_pop_f01_1_total_population_both_sexes.xls","both","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2015","tot_pop","0;2015"
+"data/wpp2017/wpp2017_pop_f01_1_total_population_both_sexes.xlsx","both","ESTIMATES;MEDIUM VARIANT","unwpp_estimates;unwpp_medium_variant","unwpp_2017","tot_pop","0;2015"
