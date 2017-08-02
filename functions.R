@@ -12,10 +12,10 @@ import_demography <- function(con, clear_first = TRUE, test_code = "") {
 # For dev only:
 # Code to empty the tables. (Not drop them)
 empty_tables <- function(con) {
-  tables <- c("demographic_statistic",  "demographic_value_unit", 
+  tables <- c("demographic_statistic",
               "touchstone_demographic_source",
               "gender", "demographic_variant", "demographic_source",
-              "demographic_statistic_type", "demographic_statistic_type_variant")
+              "demographic_statistic_type")
   tables_str <- paste(tables, collapse = ", ")
   sql <- paste("TRUNCATE", tables_str)
   message(sprintf("Clearing %s", tables_str))
