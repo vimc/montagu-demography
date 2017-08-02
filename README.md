@@ -112,7 +112,7 @@ Kosovo is not available at all - known issue.
 
 ## Database meta-tables
 
-### database_source
+### demographic_source
 
 | code        | name                             |
 |-------------|----------------------------------|
@@ -121,7 +121,7 @@ Kosovo is not available at all - known issue.
 | unwpp_2017  | UNWPP 2017                       |
 | cm_2015     | ChildMortality.org (IGME), 2015  |
 
-### database_variant
+### demographic_variant
 
 | code                   | name                           |
 |------------------------|--------------------------------|
@@ -133,7 +133,7 @@ Kosovo is not available at all - known issue.
 | cm_lower               | Child Mortality (IGME) Lower   |
 | cm_upper               | Child Mortality (IGME) Upper   |
 
-### database_gender
+### gender
 
 | code   | name    |
 |--------|---------|
@@ -141,9 +141,9 @@ Kosovo is not available at all - known issue.
 | male   | Male    |
 | female | Female  |
 
-### database_statistic_type
+### demographic_statistic_type
 
-| code         | age_interpretation    | name                                                   | y*| rd*        |
+| code         | age_interpretation    | name                                                   | y | rd         |
 |--------------|-----------------------|--------------------------------------------------------|---|------------|
 | as_fert      | Age of mother (years) | Age-specific fertility                                 | 5 | 2000-07-01 |
 | birth_mf     | N/A                   | Sex Ratio at Birth                                     | 5 | 2000-07-01 |
@@ -166,5 +166,6 @@ Kosovo is not available at all - known issue.
 | p_dying      | Age (years)           | Probability of dying in a given age range              | 5 | 2000-07-01 |
 | tot_pop      | Age (years)           | Total Population                                       | 1 | 2000-07-01 |
 
-y* = year_step_size
-rd* = reference_date
+y = year_step_size
+rd = reference_date
+
