@@ -30,12 +30,31 @@ table_is_empty <- function(con, tbl) {
 # Adds identifiers for the gender, demographic_variant, demographic_statistic_type,
 # demographic_source tables, demographic_statistic_type_variant and demographic_value_unit tables.
 init_tables <- function(con) {
-  tables <- c("gender", "demographic_value_unit", "demographic_variant", "demographic_statistic_type",
-              "demographic_source", "demographic_statistic_type_variant")
+  tables <- c("gender", "demographic_value_unit", "demographic_variant",
+              "demographic_source")
   for (table in tables) {
     upload_csv(con, file.path("meta", paste0(table, ".csv")))
   }
   upload_csv(con, "montagu-db/minimal/common/country.csv")
+  
+  # Special for demographic_statistic type, to deal with foreign keys
+  # for default_variant field.
+  
+  dst_csv <- read_csv("meta/demographic_statistic_type.csv")
+  db_dv <- DBI::dbGetQuery(con, "SELECT * from demographic_variant")
+  db_unit <- DBI::dbGetQuery(con, "SELECT * from demographic_value_unit")
+  dst_csv$default_variant <- db_dv$id[match(dst_csv$default_variant, db_dv$code)]
+  dst_csv$demographic_value_unit <- db_unit$id[match(dst_csv$demographic_value_unit, db_unit$name)]  
+  DBI::dbWriteTable(con, "demographic_statistic_type", dst_csv, append = TRUE)
+  
+  # Same for demographic_statistic_type_variant
+  
+  dstv_csv <- read_csv("meta/demographic_statistic_type_variant.csv")
+  db_dst <- DBI::dbGetQuery(con, "SELECT * from demographic_statistic_type")
+  dstv_csv$demographic_statistic_type <- db_dst$id[match(dstv_csv$demographic_statistic_type,db_dst$code)]
+  dstv_csv$demographic_variant <- db_dv$id[match(dstv_csv$demographic_variant, db_dv$code)]
+  DBI::dbWriteTable(con, "demographic_statistic_type_variant", dstv_csv, append = TRUE)
+  
 }
 
 ## NOTE: this does not necessarily do error handling properly:
