@@ -8,7 +8,7 @@
 "cm_imr","Under 1 years","Under 1 mortality rate","1","2000-07-01","false","cm_medium","Deaths per live birth"
 "cm_nmr","1 years","Neonatal (28 day) mortality","1","2000-07-01","false","cm_medium","Deaths per live birth"
 "fert_tot","N/A","Total births per woman","1","2000-01-01","false","unwpp_medium","Number of births"
-"int_pop","Age (years)","Interpolated Population","1","2000-07-01","true","unwpp_medium"
+"int_pop","Age (years)","Interpolated Population","1","2000-07-01","true","unwpp_medium","Number of people"
 "life_ex","Age (years)","Expected remaining years of life","5","2000-07-01","true","unwpp_medium","Years"
 "lx0","N/A","Life expectancy at birth","1","2000-01-01","true","unwpp_medium","Years"
 "mort_age","5 years","Number of deaths by age","5","2000-07-01","true","unwpp_medium","Number of deaths"

@@ -12,10 +12,10 @@ import_demography <- function(con, clear_first = TRUE, test_code = "") {
 # For dev only:
 # Code to empty the tables. (Not drop them)
 empty_tables <- function(con) {
-  tables <- c("demographic_statistic",
+  tables <- c("demographic_statistic", "demographic_value_unit", 
               "touchstone_demographic_source",
               "gender", "demographic_variant", "demographic_source",
-              "demographic_statistic_type")
+              "demographic_statistic_type", "demographic_statistic_type_variant")
   tables_str <- paste(tables, collapse = ", ")
   sql <- paste("TRUNCATE", tables_str)
   message(sprintf("Clearing %s", tables_str))
@@ -27,8 +27,8 @@ table_is_empty <- function(con, tbl) {
 }
 
 # init_tables
-# Adds identifiers for the gender, demographic_variant, demographic_statistic_type
-# and demographic_source tables.
+# Adds identifiers for the gender, demographic_variant, demographic_statistic_type,
+# demographic_source tables, demographic_statistic_type_variant and demographic_value_unit tables.
 init_tables <- function(con) {
   tables <- c("gender", "demographic_value_unit", "demographic_variant", "demographic_statistic_type",
               "demographic_source", "demographic_statistic_type_variant")
