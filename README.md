@@ -87,14 +87,16 @@ MONTAGU_DB_PORT=8888
 | Survivors of 100,000 at age x| people            | 1950-2095 [5] | 0,1-4,5-9..85-100| M/F/B  | Est+M    |
 | Expected years left at age x | years             | 1950-2095 [5] | 0,1-4,5-9..85-100| M/F/B  | Est+M    |
 | Net migration rate           | change per person | 1950-2095 [5] |         -        |   B    | Est+M    |
+| IMR <1 mortality rate        | deaths/live birth | 1950-2100 [1] |         -        |   B    | Est+M    |
+| U5MR <5 Mortality rate       | deaths/live birth | 1950-2100 [1] |         -        |   B    | Est+M    |
 
 ### From childmortality.org 2015:
 
 | Data                         | Units             | Years [Step]  | Ages [Step]      | Gender | Variants |
 |------------------------------|-------------------|---------------|------------------|--------|----------|
-| U5MR <5 Mortality rate       | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
 | IMR <1 mortality rate        | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
 | NMR Neo (28d) mortality rate | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
+| U5MR <5 Mortality rate       | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
 
 ### Notes:
 
@@ -126,11 +128,11 @@ Kosovo is not available at all - known issue.
 | code                   | name                           |
 |------------------------|--------------------------------|
 | unwpp_estimates        | UNWPP Estimates                |
-| unwpp_medium_variant   | UNWPP Medium Variant           |
 | unwpp_high_variant     | UNWPP High Variant             |
 | unwpp_low_variant      | UNWPP Low Variant              |
-| cm_median              | Child Mortality (IGME) Median  |
+| unwpp_medium_variant   | UNWPP Medium Variant           |
 | cm_lower               | Child Mortality (IGME) Lower   |
+| cm_median              | Child Mortality (IGME) Median  |
 | cm_upper               | Child Mortality (IGME) Upper   |
 
 ### gender
@@ -150,9 +152,9 @@ Kosovo is not available at all - known issue.
 | births       | N/A                   | Number of births                                       | 1 | 2000-01-01 |
 | cbr          | N/A                   | Crude birth rate                                       | 1 | 2000-01-01 |
 | cdr          | N/A                   | Crude death rate                                       | 1 | 2000-01-01 |
-| cm_u5mr      | Under 5 years         | Under 5 mortality rate per 1000 live births            | 1 | 2000-07-01 |
 | cm_imr       | Under 1 years         | Under 1 mortality rate per 1000 live births            | 1 | 2000-07-01 |
 | cm_nmr       | 1 years               | Neonatal (28 day) mortality rate per 1000 live births  | 1 | 2000-07-01 |
+| cm_u5mr      | Under 5 years         | Under 5 mortality rate per 1000 live births            | 1 | 2000-07-01 |
 | fert_tot     | N/A                   | Total births per woman                                 | 1 | 2000-01-01 |
 | int_pop      | Age (years)           | Interpolated Population                                | 1 | 2000-07-01 |
 | life_ex      | Age (years)           | Expected remaining years of life                       | 5 | 2000-07-01 |
@@ -161,10 +163,12 @@ Kosovo is not available at all - known issue.
 | mort_tot     | N/A                   | Total deaths                                           | 1 | 2000-01-01 |
 | n_survivors  | Age (years)           | Number of survivors from a birth-cohort of 100,000     | 5 | 2000-07-01 |
 | net_mig_rate | N/A                   | Net Migration Rate                                     | 5 | 2000-07-01 |
+| p_dying      | Age (years)           | Probability of dying in a given age range              | 5 | 2000-07-01 |
 | qq_births    | N/A                   | Quinquennial number of births                          | 5 | 2000-07-01 |
 | qq_pop       | Age (years)           | Quinquennial Population                                | 5 | 2000-07-01 |
-| p_dying      | Age (years)           | Probability of dying in a given age range              | 5 | 2000-07-01 |
 | tot_pop      | Age (years)           | Total Population                                       | 1 | 2000-07-01 |
+| unwpp_imr    | Under 1 years         | Under 1 mortality rate per 1000 live births            | 1 | 2000-01-01 |
+| unwpp_u5mr   | Under 5 years         | Under 5 mortality rate per 1000 live births            | 1 | 2000-01-01 |
 
 y = year_step_size
 rd = reference_date

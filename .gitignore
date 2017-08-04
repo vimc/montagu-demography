@@ -6,3 +6,4 @@ montagu_demography.Rproj
 .Renviron
 *.dump
 .Rdata
+*.Rproj

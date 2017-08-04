@@ -569,13 +569,17 @@ process_population <- function(con, xlfile, gender, sheet_names,
                       "Life expectancy at birth, females (years)",
                       "Births (thousands)",
                       "Crude birth rate (births per 1,000 population)",
-                      "Total fertility (live births per woman)")
-        
-        transforms = c(1000,1000,1000,0.001,1,1,1,1000,0.001,1)
+                      "Total fertility (live births per woman)",
+                      "Infant mortality rate (infant deaths per 1,000 live births)",
+                      "Under-five mortality (deaths under age 5 per 1,000 live births)")
+
+        transforms = c(1000,1000,1000,0.001,1,1,1,1000,0.001,1,0.001,0.001)
                       
-        genders <- c("both","male","female","both","both","male","female","both","both","both")
+        genders <- c("both","male","female","both","both","male",
+                     "female","both","both","both","both","both")
         
-        var_names <- c("mort_age","mort_age","mort_age","cdr","lx0","lx0","lx0","births","cbr","fert_tot")
+        var_names <- c("mort_age","mort_age","mort_age","cdr","lx0",
+                       "lx0","lx0","births","cbr","fert_tot","unwpp_imr","unwpp_u5mr")
         
         d<- report_time(process_annual_indicators(xl,variant_names[[i]],col_names, genders, 
                                                   var_names, transforms, dsource, remove_year[[i]]),

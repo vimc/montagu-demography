@@ -48,3 +48,7 @@
 "p_dying","unwpp_medium_variant"
 "tot_pop","unwpp_estimates"
 "tot_pop","unwpp_medium_variant"
+"unwpp_imr","unwpp_estimates"
+"unwpp_imr","unwpp_medium_variant"
+"unwpp_u5mr","unwpp_estimates"
+"unwpp_u5mr","unwpp_medium_variant"
