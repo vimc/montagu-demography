@@ -598,9 +598,6 @@ process_all_population <- function(con, test_code = "") {
   country_tr <- read_iso_countries()
   country_tr <- filter_iso_countries(country_tr)
   
-  
-  
-  
   if (test_code=="") {
     info <- read_csv("meta/process.csv")
   } else if (test_code=="july28_test") {
@@ -664,3 +661,118 @@ RE_YEAR <- "^[0-9]{4}$"
 RE_YEAR_SPAN <- "^[0-9]{4}-[0-9]{4}$"
 RE_AGE_SPAN <- "^[0-9]{1,2}-[0-9]{1,3}$"
 
+# Use WPP to extrapolate IGME fields back to 1950 and up to 2100.
+
+extrapolate_igme <- function(con) {
+  
+  country_tr <- read_iso_countries()
+  country_tr <- filter_iso_countries(country_tr)
+  
+  # Lookup both gender
+  
+  db_gender <- DBI::dbGetQuery(con, "SELECT * from gender")
+  id_both_gender <- db_gender$id[db_gender$code=='both']
+  
+  # Lookup variant ids
+  
+  db_dv <- DBI::dbGetQuery(con, "SELECT * from demographic_variant")
+  id_cm_med <- db_dv$id[db_dv$code == 'cm_median']
+  id_extrap <- db_dv$id[db_dv$code == 'wpp_cm_extrapolation']
+  id_wpp_med <- db_dv$id[db_dv$code == 'unwpp_medium_variant']
+  id_wpp_est <- db_dv$id[db_dv$code == 'unwpp_estimates']
+  
+  # Lookup type ids
+  
+  db_types <- DBI::dbGetQuery(con, "SELECT * from demographic_statistic_type")
+  id_cm_imr <- db_types$id[db_types$code == 'cm_imr']
+  id_cm_u5mr <- db_types$id[db_types$code == 'cm_u5mr']
+  id_cm_nmr <- db_types$id[db_types$code == 'cm_nmr']
+  id_wpp_imr <- db_types$id[db_types$code == 'unwpp_imr']
+  id_wpp_u5mr <- db_types$id[db_types$code == 'unwpp_u5mr']
+  
+  # Lookup new demographic source
+  db_src <- DBI::dbGetQuery(con, "SELECT * from demographic_source")
+  id_extrap_source <- db_src$id[db_src$code == 'unwpp2017_cm2015_hybrid']
+  
+  extrapolate_nmr <- function(con) {
+    for (country in country_tr$id) {   # For each country
+      
+      # Find earliest year that has NMR data
+      
+      cm_nmr <- DBI::dbGetQuery(con, paste("SELECT year, value FROM demographic_statistic WHERE ",
+                                          "demographic_statistic_type = ",id_cm_nmr," AND ",
+                                          "demographic_variant = ", id_cm_med," AND ",
+                                          "country = '",country,"'", sep="")
+      )
+      
+      cm_imr <- DBI::dbGetQuery(con, paste("SELECT year, value FROM demographic_statistic WHERE ",
+                                           "demographic_statistic_type = ",id_cm_imr," AND ",
+                                           "demographic_variant = ", id_cm_med," AND ",
+                                           "country = '",country,"'", sep="")
+      )
+      
+      first_year_nmr <- min(cm_nmr$year)   # Expected to be variable..            
+      last_year_nmr <- max(cm_nmr$year)    # Expected to be 2015
+      first_year_imr <- min(cm_imr$year)   # Expected to be variable..            
+      last_year_imr <- max(cm_imr$year)    # Expected to be 2015
+      first_year <- max(first_year_nmr, first_year_imr)
+      last_year <- min(last_year_nmr, last_year_imr)
+      
+      nmr_imr_frac_early <- cm_nmr$value[cm_nmr$year==first_year] / cm_imr$value[cm_imr$year==first_year]
+      nmr_imr_frac_late <- cm_nmr$value[cm_nmr$year==last_year] / cm_imr$value[cm_imr$year==last_year]
+      
+      first_year <- first_year_nmr
+      last_year <- last_year_nmr
+      
+                                          # Get WPP data for every year up until that date.
+      
+      unwpp_imr <- DBI::dbGetQuery(con, paste("SELECT year, value FROM demographic_statistic WHERE ",
+                                            "demographic_statistic_type = ",id_wpp_imr," AND ",
+                                            "(demographic_variant = ", id_wpp_med," OR ",
+                                            " demographic_variant = ", id_wpp_est,") AND ",
+                                            "country = '",country,"' AND ", 
+                                            "(year < ",first_year," OR year > ",last_year,")", sep="")
+      )
+      
+      if (nrow(unwpp_imr)==0) {
+        
+        message(sprintf("NMR Extrapolation warning: No WPP data for %s",country))
+      
+      } else {
+        unwpp_imr$value[unwpp_imr$year < first_year] <- unwpp_imr$value[unwpp_imr$year < first_year] * nmr_imr_frac_early
+        unwpp_imr$value[unwpp_imr$year > last_year] <- unwpp_imr$value[unwpp_imr$year > last_year] * nmr_imr_frac_late
+       
+        res <- data.frame(
+          year = unwpp_imr$year,
+          value = unwpp_imr$value,
+          age_from = 0,
+          age_to = 0,
+          gender = id_both_gender,
+          country = country,
+          demographic_statistic_type = id_cm_nmr,
+          demographic_variant = id_extrap,
+          demographic_source = id_extrap_source,
+          stringsAsFactors = FALSE
+        )
+        row.names(res) <- NULL
+        DBI::dbWriteTable(con, "demographic_statistic", res, append = TRUE)
+      }
+    }  
+  }
+
+  extrapolate_nmr(con)
+}
+
+# Use WPP to extrapolate IGME fields back to 1950 and up to 2100.
+
+delete_unwanted <- function(con) {
+  db_types <- DBI::dbGetQuery(con, "SELECT * from demographic_statistic_type")
+  id_cm_imr <- db_types$id[db_types$code == 'cm_imr']
+  id_cm_u5mr <- db_types$id[db_types$code == 'cm_u5mr']
+  rows<-DBI::dbExecute(con, paste("DELETE FROM demographic_statistic WHERE ",
+                            "  (demographic_statistic_type =", id_cm_imr," OR ",
+                            "   demographic_statistic_type =", id_cm_u5mr,")", sep=""))
+}
+
+  
+  

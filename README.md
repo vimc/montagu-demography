@@ -94,9 +94,10 @@ MONTAGU_DB_PORT=8888
 
 | Data                         | Units             | Years [Step]  | Ages [Step]      | Gender | Variants |
 |------------------------------|-------------------|---------------|------------------|--------|----------|
-| IMR <1 mortality rate        | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
-| NMR Neo (28d) mortality rate | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
-| U5MR <5 Mortality rate       | deaths/live birth |~1950-2015 [1] |         -        |   B    | CI H/M/L |
+| NMR Neo (28d) mortality rate | deaths/live birth | ~1950-2015[1] |         -        |   B    | CI H/M/L |
+
+For now, we have crudely extrapolated using ratio of NMR/IMR for the earliest and latest years, and multiplied
+UNWPP's IMR by that, to fill in the early and late gaps in the Neonatal Mortality data.
 
 ### Notes:
 

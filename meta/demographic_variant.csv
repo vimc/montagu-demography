@@ -12,3 +12,4 @@
 "cm_median","Child Mortality (IGME) Median"
 "cm_lower","Child Mortality (IGME) Lower"
 "cm_upper","Child Mortality (IGME) Upper"
+"wpp_cm_extrapolation","Use WPP medium projection to extrapolate IGME"
