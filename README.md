@@ -90,14 +90,17 @@ MONTAGU_DB_PORT=8888
 | IMR <1 mortality rate        | deaths/live birth | 1950-2100 [1] |         -        |   B    | Est+M    |
 | U5MR <5 Mortality rate       | deaths/live birth | 1950-2100 [1] |         -        |   B    | Est+M    |
 
-### From childmortality.org 2015:
+### Neonatal Mortality 
 
 | Data                         | Units             | Years [Step]  | Ages [Step]      | Gender | Variants |
 |------------------------------|-------------------|---------------|------------------|--------|----------|
-| NMR Neo (28d) mortality rate | deaths/live birth | ~1950-2015[1] |         -        |   B    | CI H/M/L |
+| NMR Neo (28d) mortality rate | deaths/live birth | 1950-2099 [1] |         -        |   B    | Hybrid   |
 
-For now, we have crudely extrapolated using ratio of NMR/IMR for the earliest and latest years, and multiplied
-UNWPP's IMR by that, to fill in the early and late gaps in the Neonatal Mortality data.
+A WPP-consistent neonatal mortality variable for 1950-2099 has been calculated, by multiplying the WPP IMR
+by the Child Mortality (2015) NMR / IMR fraction. CM 2015 data ends at 2015, but starts at different time
+points for different countries - and sometimes for different variables (NMR, IMR), for each country. Where
+CM data does not exist to scale the WPP IMR, the nearest data (ie, the earliest available NMR/IMR) is used,
+and for all WPP years after 2016, CM's 2015 NMR/IMR is used.
 
 ### Notes:
 

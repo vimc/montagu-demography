@@ -103,66 +103,13 @@ process_population <- function(con, xlfile, gender, sheet_names,
                value = value)
   }
   
-  read_sheet <- function(sheet, skip, country_col, iso_numeric_to_alpha) {
+  read_sheet <- function(sheet, skip= 16, country_col = "Country code") {
     message(sprintf("Reading %s:%s", xlfile, sheet))
     xl <- read_excel(xlfile, sheet = sheet, skip = skip, col_names = TRUE, na = c("", "…"))
-    
-    if (iso_numeric_to_alpha) {
-      xl$iso3 <- country_tr$id[match(xl[[country_col]], country_tr$code)]
-    } else {
-      ## ISO is already alpha (eg, ChildMortality)
-      xl$iso3 <- country_tr$id[match(xl[[country_col]], country_tr$id)]
-    }
-    
+    xl$iso3 <- country_tr$id[match(xl[[country_col]], country_tr$code)]
     as.data.frame(xl[!is.na(xl$iso3), ])
   }
-  
-  read_sheet_unwpp <- function(sheet) {
-    read_sheet(sheet, skip = 16, country_col = "Country code", iso_numeric_to_alpha = TRUE)
-  }
-  
-  read_sheet_cm <- function(sheet) {
-    read_sheet(sheet, skip=6, country_col = "ISO Code", iso_numeric_to_alpha = FALSE)
-  }
 
-
-  process_child_mortality <- function(xl, dsource) {
-    rightString <- function(s,n) {
-      substr(s, (nchar(s)-n)+1, nchar(s))
-    }
-    
-    select_cols <- sort(c(
-      grep("^IMR.[0-9]{4}$", names(xl)),
-      grep("^U5MR.[0-9]{4}$", names(xl)),
-      grep("^NMR.[0-9]{4}$", names(xl))
-    ))
-    
-    no_countries <- length(unique(xl$iso3))
-    variants <- c("cm_lower","cm_median","cm_upper")
-    dtypes <- c("cm_u5mr","cm_imr","cm_nmr")
-    years <- rightString( colnames(xl)[select_cols], 4)
-    no_years <- length(years)
-    no_variants <- length(variants)
-    no_variables <- length(dtypes)
-
-    res <- data.frame(
-      year = rep(years, each = (no_countries * no_variants)),
-      value = unlist(xl[select_cols]),
-      age_from = 0,
-      age_to = 0,
-      gender = "both",
-      country = xl$iso3,
-      demographic_statistic_type = rep(dtypes, each = no_countries * no_variants * length(unique(years))),
-      demographic_variant = rep(variants, no_countries * no_years),
-      demographic_source = dsource,
-      stringsAsFactors = FALSE
-    )
-    res <- res[!is.na(res$value), ]
-    res$value <- res$value/1000.0
-    row.names(res) <- NULL
-    res
-  }
-  
   process_life_table <- function(xl, variant, gender, col_names, var_names, dsource) {
     # Remove unwanted columns
     
@@ -487,64 +434,57 @@ process_population <- function(con, xlfile, gender, sheet_names,
     #} else {
       
       if (data_type == 'int_pop') {
-        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        xl <- report_time(read_sheet(sheet_names[[i]]), "read")
         d <- report_time(
           process_interpolated_population_sheet(xl, variant_names[[i]],
                                                 data_type, remove_year[[i]], test_code), "process")
         
       } else if (data_type == 'qq_pop') {
-        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        xl <- report_time(read_sheet(sheet_names[[i]]), "read")
         d <- report_time(
           process_qq_population_sheet(xl, variant_names[[i]],
                                                 data_type, remove_year[[i]]), "process")
       
       } else if (data_type == 'tot_pop') {
-        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        xl <- report_time(read_sheet(sheet_names[[i]]), "read")
         d <- report_time(
           process_total_population_sheet(xl, variant_names[[i]], data_type, remove_year[[i]]),
           "process")
         
       } else if (data_type == 'birth_mf') {
-        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        xl <- report_time(read_sheet(sheet_names[[i]]), "read")
         d <- report_time(
           process_5yearly_single_sheet(xl, variant_names[[i]], data_type, mult_value = 1),
           "process")
       
       } else if (data_type == 'qq_births') {
-        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        xl <- report_time(read_sheet(sheet_names[[i]]), "read")
         d <- report_time(
           process_5yearly_single_sheet(xl, variant_names[[i]], data_type, mult_value = 1000),
           "process")
         
         
       } else if (data_type == 'net_mig_rate') {
-        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        xl <- report_time(read_sheet(sheet_names[[i]]), "read")
         d <- report_time(
           process_5yearly_single_sheet(xl, variant_names[[i]], data_type, mult_value = 0.001),
           "process")
         
             
       } else if (data_type == 'as_fert') {
-        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        xl <- report_time(read_sheet(sheet_names[[i]]), "read")
         d <- report_time(
           process_age_specific_fertility_sheet(xl, variant_names[[i]], data_type),
           "process")
         
       } else if (data_type == 'mort_age') {
-        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        xl <- report_time(read_sheet(sheet_names[[i]]), "read")
         d <- report_time(
           process_age_specific_mortality_sheet(xl, variant_names[[i]], data_type),
           "process")
         
-        
-      } else if (data_type == 'cm_2015') {
-        xl <- report_time(read_sheet_cm(sheet_names[[i]]), "read")
-        d <- report_time(
-          process_child_mortality(xl, dsource),
-          "process")
-        
       } else if (data_type == 'life_table') {
-        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        xl <- report_time(read_sheet(sheet_names[[i]]), "read")
         
         col_names = c("Probability of dying q(x,n)",
                       "Number of survivors l(x)",
@@ -558,7 +498,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
 
       } else if (data_type == 'ann_int_ind') {
         
-        xl <- report_time(read_sheet_unwpp(sheet_names[[i]]), "read")
+        xl <- report_time(read_sheet(sheet_names[[i]]), "read")
         
         col_names = c("Deaths (thousands)",
                       "Male deaths (thousands)",
@@ -661,13 +601,32 @@ RE_YEAR <- "^[0-9]{4}$"
 RE_YEAR_SPAN <- "^[0-9]{4}-[0-9]{4}$"
 RE_AGE_SPAN <- "^[0-9]{1,2}-[0-9]{1,3}$"
 
-# Use WPP to extrapolate IGME fields back to 1950 and up to 2100.
+#-------------------------------------------------------------------------------------
+#
+# Create Neonatal Mortality data from UNWPP IMR, and CM-NMR/IMR
+#
+#
 
-extrapolate_igme <- function(con) {
+
+create_nmr <- function(con, wpp_source, cm_file, cm_sheet, new_source, new_variant) {
+  
+  read_cm_sheet <- function(xlfile, sheet, skip = 6, country_col = "ISO Code") {
+    message(sprintf("Reading %s:%s", xlfile, sheet))
+    xl <- read_excel(xlfile, sheet = sheet, skip = skip, col_names = TRUE, na = c("", "…"))
+    xl$iso3 <- country_tr$id[match(xl[[country_col]], country_tr$id)]
+    as.data.frame(xl[!is.na(xl$iso3), ])
+  }
+  
+  # Get the country set...
   
   country_tr <- read_iso_countries()
   country_tr <- filter_iso_countries(country_tr)
   
+  # Load the XL sheet.
+  
+  xl <- read_cm_sheet(cm_file, cm_sheet)
+  
+  # Get db foreign keys
   # Lookup both gender
   
   db_gender <- DBI::dbGetQuery(con, "SELECT * from gender")
@@ -676,103 +635,125 @@ extrapolate_igme <- function(con) {
   # Lookup variant ids
   
   db_dv <- DBI::dbGetQuery(con, "SELECT * from demographic_variant")
-  id_cm_med <- db_dv$id[db_dv$code == 'cm_median']
-  id_extrap <- db_dv$id[db_dv$code == 'wpp_cm_extrapolation']
+  id_extrap <- db_dv$id[db_dv$code == new_variant]
   id_wpp_med <- db_dv$id[db_dv$code == 'unwpp_medium_variant']
   id_wpp_est <- db_dv$id[db_dv$code == 'unwpp_estimates']
   
   # Lookup type ids
   
   db_types <- DBI::dbGetQuery(con, "SELECT * from demographic_statistic_type")
-  id_cm_imr <- db_types$id[db_types$code == 'cm_imr']
-  id_cm_u5mr <- db_types$id[db_types$code == 'cm_u5mr']
-  id_cm_nmr <- db_types$id[db_types$code == 'cm_nmr']
   id_wpp_imr <- db_types$id[db_types$code == 'unwpp_imr']
   id_wpp_u5mr <- db_types$id[db_types$code == 'unwpp_u5mr']
+  id_nmr <- db_types$id[db_types$code == 'unwpp_cm_nmr']
   
-  # Lookup new demographic source
+  # Lookup demographic source
   db_src <- DBI::dbGetQuery(con, "SELECT * from demographic_source")
-  id_extrap_source <- db_src$id[db_src$code == 'unwpp2017_cm2015_hybrid']
+  id_wpp_source <- db_src$id[db_src$code == wpp_source]
+  id_extrap_source <- db_src$id[db_src$code == new_source]
   
-  extrapolate_nmr <- function(con) {
-    for (country in country_tr$id) {   # For each country
-      
-      # Find earliest year that has NMR data
-      
-      cm_nmr <- DBI::dbGetQuery(con, paste("SELECT year, value FROM demographic_statistic WHERE ",
-                                          "demographic_statistic_type = ",id_cm_nmr," AND ",
-                                          "demographic_variant = ", id_cm_med," AND ",
-                                          "country = '",country,"'", sep="")
-      )
-      
-      cm_imr <- DBI::dbGetQuery(con, paste("SELECT year, value FROM demographic_statistic WHERE ",
-                                           "demographic_statistic_type = ",id_cm_imr," AND ",
-                                           "demographic_variant = ", id_cm_med," AND ",
-                                           "country = '",country,"'", sep="")
-      )
-      
-      first_year_nmr <- min(cm_nmr$year)   # Expected to be variable..            
-      last_year_nmr <- max(cm_nmr$year)    # Expected to be 2015
-      first_year_imr <- min(cm_imr$year)   # Expected to be variable..            
-      last_year_imr <- max(cm_imr$year)    # Expected to be 2015
-      first_year <- max(first_year_nmr, first_year_imr)
-      last_year <- min(last_year_nmr, last_year_imr)
-      
-      nmr_imr_frac_early <- cm_nmr$value[cm_nmr$year==first_year] / cm_imr$value[cm_imr$year==first_year]
-      nmr_imr_frac_late <- cm_nmr$value[cm_nmr$year==last_year] / cm_imr$value[cm_imr$year==last_year]
-      
-      first_year <- first_year_nmr
-      last_year <- last_year_nmr
-      
-                                          # Get WPP data for every year up until that date.
-      
-      unwpp_imr <- DBI::dbGetQuery(con, paste("SELECT year, value FROM demographic_statistic WHERE ",
-                                            "demographic_statistic_type = ",id_wpp_imr," AND ",
-                                            "(demographic_variant = ", id_wpp_med," OR ",
-                                            " demographic_variant = ", id_wpp_est,") AND ",
-                                            "country = '",country,"' AND ", 
-                                            "(year < ",first_year," OR year > ",last_year,")", sep="")
-      )
-      
-      if (nrow(unwpp_imr)==0) {
-        
-        message(sprintf("NMR Extrapolation warning: No WPP data for %s",country))
-      
-      } else {
-        unwpp_imr$value[unwpp_imr$year < first_year] <- unwpp_imr$value[unwpp_imr$year < first_year] * nmr_imr_frac_early
-        unwpp_imr$value[unwpp_imr$year > last_year] <- unwpp_imr$value[unwpp_imr$year > last_year] * nmr_imr_frac_late
-       
-        res <- data.frame(
-          year = unwpp_imr$year,
-          value = unwpp_imr$value,
-          age_from = 0,
-          age_to = 0,
-          gender = id_both_gender,
-          country = country,
-          demographic_statistic_type = id_cm_nmr,
-          demographic_variant = id_extrap,
-          demographic_source = id_extrap_source,
-          stringsAsFactors = FALSE
-        )
-        row.names(res) <- NULL
-        DBI::dbWriteTable(con, "demographic_statistic", res, append = TRUE)
-      }
-    }  
+  # Spreadsheet into data frame
+  
+  rightString <- function(s,n) {
+    substr(s, (nchar(s)-n)+1, nchar(s))
   }
-
-  extrapolate_nmr(con)
+  
+  select_cols <- sort(c(
+    grep("^IMR.[0-9]{4}$", names(xl)),
+    grep("^U5MR.[0-9]{4}$", names(xl)),
+    grep("^NMR.[0-9]{4}$", names(xl))
+  ))
+  
+  no_countries <- length(unique(xl$iso3))
+  variants <- c("cm_lower","cm_median","cm_upper")
+  dtypes <- c("cm_u5mr","cm_imr","cm_nmr")
+  years <- rightString( colnames(xl)[select_cols], 4)
+  no_years <- length(years)
+  no_variants <- length(variants)
+  no_variables <- length(dtypes)
+    
+  res <- data.frame(
+    year = rep(years, each = (no_countries * no_variants)),
+    value = unlist(xl[select_cols]),
+    country = xl$iso3,
+    demographic_statistic_type = rep(dtypes, each = no_countries * no_variants * length(unique(years))),
+    demographic_variant = rep(variants, no_countries * no_years),
+    stringsAsFactors = FALSE
+  )
+  res <- res[res$demographic_variant=='cm_median',]
+  res$demographic_variant <- NULL
+  res <- res[!is.na(res$value), ]
+  row.names(res) <- NULL
+  
+  # Create new data for each country.
+  for (country in country_tr$id) {
+    # Calculate CM nmr/imr ratio
+    
+    cm_data <- res[res$country==country,]
+    cm_data$country <- NULL
+    
+    nmr_data <- cm_data[cm_data$demographic_statistic_type=='cm_nmr',]
+    nmr_data$demographic_statistic_type <- NULL
+    nmr_data<-nmr_data[!is.na(nmr_data$value),]
+    nmr_data$year <- as.numeric(nmr_data$year)
+    
+    imr_data <- cm_data[cm_data$demographic_statistic_type=='cm_imr',]
+    imr_data$demographic_statistic_type <- NULL
+    imr_data<-imr_data[!is.na(imr_data$value),]
+    imr_data$year <- as.numeric(imr_data$year)
+    
+    first_year_nmr <- min(nmr_data$year)   # Expected to be variable..            
+    last_year_nmr <- max(nmr_data$year)    # Expected to be 2015
+    first_year_imr <- min(imr_data$year)   # Expected to be variable..            
+    last_year_imr <- max(imr_data$year)    # Expected to be 2015
+    first_year <- max(first_year_nmr, first_year_imr)
+    last_year <- min(last_year_nmr, last_year_imr)
+    
+    imr_data <- imr_data[imr_data$year>=first_year,]
+    nmr_data <- nmr_data[nmr_data$year>=first_year,]
+    imr_data <- imr_data[imr_data$year<=last_year,]
+    nmr_data <- nmr_data[nmr_data$year<=last_year,]
+    
+    first_ratio <- nmr_data$value[nmr_data$year == first_year]/
+                   imr_data$value[imr_data$year == first_year]
+    
+    last_ratio <- nmr_data$value[nmr_data$year == last_year]/
+      imr_data$value[imr_data$year == last_year]
+    
+    
+    
+    nmr_imr_ratio <- data.frame(
+      year = 1950:2099,
+      value = c(rep(first_ratio,first_year-1950),
+                nmr_data$value/imr_data$value,
+                rep(last_ratio, 2099-last_year))
+    
+    )
+    
+    # Now get WPP IMR from db.
+    
+    wpp_imr <- DBI::dbGetQuery(con, paste("SELECT year, value FROM demographic_statistic WHERE ",
+                                          "demographic_statistic_type = ",id_wpp_imr," AND ",
+                                          "(demographic_variant = ",id_wpp_est," OR demographic_variant = ",id_wpp_med,") AND ",
+                                          "country = '",country,"'",sep=""))
+    
+    # Build new table multiplying by NMR/IMR ratio.
+    
+    if (nrow(wpp_imr)>0) {
+      new_umr <- data.frame(
+        age_from = 0,
+        age_to = 0,
+        value = wpp_imr$value * nmr_imr_ratio$value,
+        year = wpp_imr$year,
+        demographic_variant = id_extrap,
+        gender = id_both_gender,
+        country = country,
+        demographic_source = id_extrap_source,
+        demographic_statistic_type = id_nmr,
+        stringsAsFactors = FALSE
+      )
+      DBI::dbWriteTable(con, "demographic_statistic", new_umr, append = TRUE)
+    }
+  }
 }
-
-# Use WPP to extrapolate IGME fields back to 1950 and up to 2100.
-
-delete_unwanted <- function(con) {
-  db_types <- DBI::dbGetQuery(con, "SELECT * from demographic_statistic_type")
-  id_cm_imr <- db_types$id[db_types$code == 'cm_imr']
-  id_cm_u5mr <- db_types$id[db_types$code == 'cm_u5mr']
-  rows<-DBI::dbExecute(con, paste("DELETE FROM demographic_statistic WHERE ",
-                            "  (demographic_statistic_type =", id_cm_imr," OR ",
-                            "   demographic_statistic_type =", id_cm_u5mr,")", sep=""))
-}
-
   
   

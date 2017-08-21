@@ -2,5 +2,4 @@
 "unwpp_2012","UNWPP 2012"
 "unwpp_2015","UNWPP 2015"
 "unwpp_2017","UNWPP 2017"
-"cm_2015","ChildMortality.org (IGME), 2015"
-"unwpp2017_cm2015_hybrid","Extrapolations using both WPP and CM"
+"unwpp2017_cm2015_hybrid","Neonatal Mortality calculated from WPP (2017) IMR and ChildMortaility.org (IGME) IMR/NMR Ratio, 2015."

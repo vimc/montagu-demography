@@ -31,4 +31,3 @@
 "data/wpp2017/wpp2017_mort_f04_1_deaths_by_age_both_sexes.xlsx","both","ESTIMATES;MEDIUM VARIANT;HIGH VARIANT;LOW VARIANT","unwpp_estimates;unwpp_medium_variant;unwpp_high_variant;unwpp_low_variant","unwpp_2017","mort_age","0;0;0;0"
 "data/wpp2017/wpp2017_mort_f04_2_deaths_by_age_male.xlsx","male","ESTIMATES;MEDIUM VARIANT;HIGH VARIANT;LOW VARIANT","unwpp_estimates;unwpp_medium_variant;unwpp_high_variant;unwpp_low_variant","unwpp_2017","mort_age","0;0;0;0"
 "data/wpp2017/wpp2017_mort_f04_3_deaths_by_age_female.xlsx","female","ESTIMATES;MEDIUM VARIANT;HIGH VARIANT;LOW VARIANT","unwpp_estimates;unwpp_medium_variant;unwpp_high_variant;unwpp_low_variant","unwpp_2017","mort_age","0;0;0;0"
-"data/cm2015/ratesdeaths_allindicators.xlsx","both","Rates and Deaths","cm_2015","cm_2015","cm_2015","0"

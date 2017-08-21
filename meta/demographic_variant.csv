@@ -9,7 +9,4 @@
 "unwpp_zero_migration","UNWPP Zero Migration"
 "unwpp_constant_mortality","UNWPP Constant Mortality"
 "unwpp_no_change","UNWPP No Change"
-"cm_median","Child Mortality (IGME) Median"
-"cm_lower","Child Mortality (IGME) Lower"
-"cm_upper","Child Mortality (IGME) Upper"
-"wpp_cm_extrapolation","Use WPP medium projection to extrapolate IGME"
+"wpp_cm_hybrid","Use IGME NMR/IMR to estimate UNWPP NMR"
