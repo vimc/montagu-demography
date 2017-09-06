@@ -9,6 +9,8 @@
 "cbr","unwpp_medium_variant"
 "cdr","unwpp_estimates"
 "cdr","unwpp_medium_variant"
+"deaths","unwpp_estimates"
+"deaths","unwpp_medium_variant"
 "fert_tot","unwpp_estimates"
 "fert_tot","unwpp_medium_variant"
 "int_pop","unwpp_estimates"

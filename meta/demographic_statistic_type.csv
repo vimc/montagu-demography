@@ -4,6 +4,7 @@
 "births","N/A","Number of births","1","2000-01-01","false","unwpp_medium_variant","Number of births"
 "cbr","N/A","Crude birth rate","1","2000-01-01","false","unwpp_medium_variant","Births per person in population"
 "cdr","N/A","Crude death rate","1","2000-01-01","false","unwpp_medium_variant","Deaths per person in population"
+"deaths","N/A","Number of deaths","1","2000-01-01","false","unwpp_medium_variant","Number of deaths"
 "fert_tot","N/A","Total births per woman","1","2000-01-01","false","unwpp_medium_variant","Number of births"
 "int_pop","Age (years)","Interpolated Population","1","2000-07-01","true","unwpp_medium_variant","Number of people"
 "life_ex","Age (years)","Expected remaining years of life","5","2000-07-01","true","unwpp_medium_variant","Years"

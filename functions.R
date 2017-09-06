@@ -103,6 +103,36 @@ process_population <- function(con, xlfile, gender, sheet_names,
                value = value)
   }
   
+  reshape_qq <- function(x, cols) {
+    
+    cols_rename_last <- cols
+    
+    if (!is.na(match("80+",cols_rename_last))) {
+      cols_rename_last[match("80+",cols_rename_last)] <- "80-120"
+    }
+    
+    if (!is.na(match("100+",cols_rename_last))) {
+      cols_rename_last[match("100+",cols_rename_last)] <- "100-120"
+    }
+    
+    
+    age_from <- unlist( lapply( strsplit( cols_rename_last,"-"), `[[`, 1))
+    age_to <- unlist( lapply( strsplit( cols_rename_last,"-"), `[[`, 2))
+    nr <- nrow(x)
+    nc <- length(cols)
+    if (nrow(x) == 0) {
+      ## This avoids indexing by non-existant columns
+      value <- numeric(0)
+    } else {
+      value <- unlist(x[cols], use.names = FALSE)
+    }
+    data.frame(age_from = rep(age_from, each = nr),
+               age_to = rep(age_to, each = nr),
+               year = rep(x$year, nc),
+               country = x$iso3,
+               value = value)
+  }
+  
   read_sheet <- function(sheet, skip= 16, country_col = "Country code") {
     message(sprintf("Reading %s:%s", xlfile, sheet))
     xl <- read_excel(xlfile, sheet = sheet, skip = skip, col_names = TRUE, na = c("", "…"))
@@ -332,10 +362,10 @@ process_population <- function(con, xlfile, gender, sheet_names,
     
     age_start_from_1990 <- seq(0,95,5)
     age_end_from_1990 <- seq(4,99,5)
-    age_cols_from_1990 <- c(paste(age_start_pre_1990,age_end_pre_1990,sep="-"),"100+")
+    age_cols_from_1990 <- c(paste(age_start_from_1990,age_end_from_1990,sep="-"),"100+")
     
-    res <- rbind(reshape(xl[xl$year <  1990, ], age_cols_pre_1990),
-                 reshape(xl[xl$year >= 1990, ], age_cols_from_1990))
+    res <- rbind(reshape_qq(xl[xl$year <  1990, ], age_cols_pre_1990),
+                 reshape_qq(xl[xl$year >= 1990, ], age_cols_from_1990))
     
     res$value <- res$value * 1000
     process_shared(res, gender, dsource, variant, data_type)
@@ -518,7 +548,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
         genders <- c("both","male","female","both","both","male",
                      "female","both","both","both","both","both")
         
-        var_names <- c("mort_age","mort_age","mort_age","cdr","lx0",
+        var_names <- c("deaths","deaths","deaths","cdr","lx0",
                        "lx0","lx0","births","cbr","fert_tot","unwpp_imr","unwpp_u5mr")
         
         d<- report_time(process_annual_indicators(xl,variant_names[[i]],col_names, genders, 
