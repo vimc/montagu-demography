@@ -153,7 +153,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
                   
 
     res<- data.frame(
-      year = as.numeric(substring(unique(xl$"Period"),1,4)),
+      year = as.numeric(substring(xl$"Period",1,4)),
       gender = gender,
       demographic_variant = variant,
       demographic_source = dsource,
@@ -209,6 +209,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
       value = unlist(xl[data_cols]),
       stringsAsFactors = FALSE
     )
+    res$age_to[res$demographic_statistic_type=="unwpp_u5mr"] <- 4
     row.names(res) <- NULL
     res
   }
@@ -548,7 +549,7 @@ process_population <- function(con, xlfile, gender, sheet_names,
         genders <- c("both","male","female","both","both","male",
                      "female","both","both","both","both","both")
         
-        var_names <- c("deaths","deaths","deaths","cdr","lx0",
+        var_names <- c("mort_tot","mort_tot","mort_tot","cdr","lx0",
                        "lx0","lx0","births","cbr","fert_tot","unwpp_imr","unwpp_u5mr")
         
         d<- report_time(process_annual_indicators(xl,variant_names[[i]],col_names, genders, 
